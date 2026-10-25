@@ -15,7 +15,8 @@ class UploadDocumentScreen extends StatefulWidget {
 }
 
 class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
-  bool _hasSelectedFile = true;
+  // File is NOT selected initially; only shown after user chooses/drops a file
+  bool _hasSelectedFile = false;
   final String _fileName = 'RBI_Circular_Guidelines.pdf';
   final String _fileSize = '2.4 MB';
 
@@ -80,7 +81,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           content: const Text(
-            'Please select or drop a regulatory document to process.',
+            'Please choose a regulatory document first.',
             style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
           ),
         ),
@@ -90,7 +91,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     _isCancelled = false;
 
-    // 1. Uploading Stage (35% -> 50% -> 75% -> 100%)
+    // 1. Uploading Stage (15% -> 35% -> 50% -> 75% -> 100%)
     setState(() {
       _currentStep = UploadProcessStep.uploading;
       _uploadProgress = 0.15;
@@ -315,7 +316,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 1. Clean Scrollable Content directly in Scaffold (No overlapping containers)
+          // 1. Direct Scaffold layout (No overlapping container, clean page)
           SafeArea(
             top: false,
             bottom: true,
@@ -363,7 +364,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
                   // Content placed directly in Scaffold (No overlapping containers)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 16, 22, 32),
+                    padding: const EdgeInsets.fromLTRB(22, 20, 22, 32),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 480),
@@ -431,12 +432,12 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     }
   }
 
-  // Page 1: Initial Drag & Drop View
+  // Page 1: Initial Drag & Drop View (Clean Scaffold, no overlapping handles)
   Widget _buildInitialUploadContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
 
         // Drag & Drop Zone with dashed border
         CustomPaint(
@@ -452,13 +453,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
               color: const Color(0xFFFAFBFE),
               borderRadius: BorderRadius.circular(16),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.description_outlined,
-                  size: 40,
+                  size: 42,
                   color: Color(0xFF4F46E5),
                 ),
                 const SizedBox(height: 10),
@@ -499,7 +500,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: _handleChooseFile,
                   style: OutlinedButton.styleFrom(
@@ -512,8 +513,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 9,
+                      horizontal: 22,
+                      vertical: 10,
                     ),
                     backgroundColor: Colors.white,
                   ),
@@ -536,31 +537,30 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
         const Text(
           'Supported formats: PDF, DOCX, DOC (Max 50 MB)',
           style: TextStyle(
             fontFamily: 'Poppins',
-            fontSize: 12,
+            fontSize: 12.5,
             color: Color(0xFF64748B),
           ),
           textAlign: TextAlign.center,
         ),
 
-        const SizedBox(height: 16),
-
+        // ONLY shown after user chooses a file!
         if (_hasSelectedFile) ...[
+          const SizedBox(height: 20),
           _buildFilePreviewCard(showCheckmark: false),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
+          // Upload & Process Button
+          _buildGradientButton(
+            label: 'Upload & Process',
+            icon: Icons.cloud_upload_outlined,
+            onPressed: _startUploadAndAnalysis,
+          ),
         ],
-
-        // Upload & Process Button
-        _buildGradientButton(
-          label: 'Upload & Process',
-          icon: Icons.cloud_upload_outlined,
-          onPressed: _startUploadAndAnalysis,
-        ),
       ],
     );
   }
@@ -572,19 +572,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
         const Text(
           'Uploading file...',
           style: TextStyle(
@@ -693,19 +680,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
         const Text(
           'Upload Completed!',
           style: TextStyle(
@@ -772,19 +746,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
         const Text(
           'Analyzing Document...',
           style: TextStyle(
@@ -883,19 +844,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
         const Text(
           'Processing & Generating Insights...',
           style: TextStyle(
@@ -976,19 +924,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
         const Text(
           'Document Processed Successfully',
           style: TextStyle(
@@ -1080,6 +1015,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 child: OutlinedButton(
                   onPressed: () {
                     setState(() {
+                      _hasSelectedFile = false; // Reset file selection!
                       _currentStep = UploadProcessStep.initial;
                       _uploadProgress = 0.0;
                       _analysisStepIndex = 0;

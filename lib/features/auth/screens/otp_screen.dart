@@ -190,8 +190,8 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final imageHeight = (size.height * 0.44).clamp(290.0, 390.0);
-    const overlapHeight = 10.0;
+    final imageHeight = (size.height * 0.28).clamp(180.0, 230.0);
+    const overlapHeight = 16.0;
     final timerText = '00:${_countdown.toString().padLeft(2, '0')}';
 
     return Scaffold(
@@ -199,201 +199,198 @@ class _OtpScreenState extends State<OtpScreen> {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 1. Non-Scrollable Layout fitting the screen
-          SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: SizedBox(
-              height: size.height,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top Hero Image (flush to top, left, right)
-                  SizedBox(
-                    width: double.infinity,
-                    height: imageHeight,
-                    child: Image.asset(
-                      AppAssets.otpIllustration,
-                      width: double.infinity,
-                      height: imageHeight,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                    ),
-                  ),
+          // 1. Fixed Non-Scrollable Layout fitting the screen
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top Hero Image (flush to top, left, right)
+              SizedBox(
+                width: double.infinity,
+                height: imageHeight,
+                child: Image.asset(
+                  AppAssets.otpIllustration,
+                  width: double.infinity,
+                  height: imageHeight,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+              ),
 
-                  // Lowered Curved Container with Content
-                  Expanded(
-                    child: Transform.translate(
-                      offset: const Offset(0, -overlapHeight),
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(32),
-                            topRight: Radius.circular(32),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x12000000),
-                              blurRadius: 16,
-                              offset: Offset(0, -4),
-                            ),
-                          ],
+              // Curved Container with Content - moved significantly higher up!
+              Expanded(
+                child: Transform.translate(
+                  offset: const Offset(0, -overlapHeight),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(32),
+                        topRight: Radius.circular(32),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 18,
+                          offset: Offset(0, -6),
                         ),
-                        padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Top grey indicator pill handle
-                                Center(
-                                  child: Container(
-                                    width: 48,
-                                    height: 4.5,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE2E8F0),
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
+                    child: SafeArea(
+                      top: false,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Top grey indicator pill handle
+                              Center(
+                                child: Container(
+                                  width: 48,
+                                  height: 4.5,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE2E8F0),
+                                    borderRadius: BorderRadius.circular(3),
                                   ),
                                 ),
+                              ),
 
-                                const SizedBox(height: 12),
+                              const SizedBox(height: 16),
 
-                                // Subtitle with highlighted user email
-                                Column(
-                                  children: [
-                                    const Text(
-                                      AppStrings.verifyEmailSubtitle,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        color: Color(0xFF64748B),
-                                        fontSize: 13,
-                                      ),
-                                      textAlign: TextAlign.center,
+                              // Subtitle with highlighted user email - moved comfortably above!
+                              Column(
+                                children: [
+                                  const Text(
+                                    AppStrings.verifyEmailSubtitle,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      color: Color(0xFF64748B),
+                                      fontSize: 13.5,
                                     ),
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      widget.email,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 14),
-
-                                // 6-digit OTP Input Row
-                                OtpInputRow(
-                                  key: _otpKey,
-                                  length: 6,
-                                  initialValue: _otpValue,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      _otpValue = val;
-                                      if (_errorMessage != null) {
-                                        _errorMessage = null;
-                                      }
-                                    });
-                                  },
-                                  onCompleted: (val) {
-                                    setState(() => _otpValue = val);
-                                  },
-                                ),
-
-                                if (_errorMessage != null) ...[
-                                  const SizedBox(height: 4),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 3),
                                   Text(
-                                    _errorMessage!,
+                                    widget.email,
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
-                                      color: AppColors.error,
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
+                              ),
 
-                                const SizedBox(height: 14),
+                              const SizedBox(height: 18),
 
-                                // Resend OTP Countdown / Action
-                                Center(
-                                  child: _countdown > 0
-                                      ? RichText(
-                                          text: TextSpan(
-                                            style: const TextStyle(
-                                              fontFamily: 'Poppins',
-                                              color: Color(0xFF64748B),
-                                              fontSize: 13,
-                                            ),
-                                            children: [
-                                              const TextSpan(
-                                                text:
-                                                    '${AppStrings.resendOtpIn} ',
-                                              ),
-                                              TextSpan(
-                                                text: timerText,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Poppins',
-                                                  color: Color(0xFF4F46E5),
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
+                              // 6-digit OTP Input Row
+                              OtpInputRow(
+                                key: _otpKey,
+                                length: 6,
+                                initialValue: _otpValue,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _otpValue = val;
+                                    if (_errorMessage != null) {
+                                      _errorMessage = null;
+                                    }
+                                  });
+                                },
+                                onCompleted: (val) {
+                                  setState(() => _otpValue = val);
+                                },
+                              ),
+
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    color: AppColors.error,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+
+                              // Resend OTP Countdown / Action
+                              Center(
+                                child: _countdown > 0
+                                    ? RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            color: Color(0xFF64748B),
+                                            fontSize: 13,
                                           ),
-                                        )
-                                      : TextButton.icon(
-                                          onPressed: _resendOtp,
-                                          icon: const Icon(
-                                            Icons.refresh_rounded,
-                                            size: 17,
+                                          children: [
+                                            const TextSpan(
+                                              text:
+                                                  '${AppStrings.resendOtpIn} ',
+                                            ),
+                                            TextSpan(
+                                              text: timerText,
+                                              style: const TextStyle(
+                                                fontFamily: 'Poppins',
+                                                color: Color(0xFF4F46E5),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : TextButton.icon(
+                                        onPressed: _resendOtp,
+                                        icon: const Icon(
+                                          Icons.refresh_rounded,
+                                          size: 17,
+                                          color: Color(0xFF4F46E5),
+                                        ),
+                                        label: const Text(
+                                          AppStrings.resendOtpNow,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
                                             color: Color(0xFF4F46E5),
-                                          ),
-                                          label: const Text(
-                                            AppStrings.resendOtpNow,
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              color: Color(0xFF4F46E5),
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 13,
-                                            ),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
                                           ),
                                         ),
-                                ),
+                                      ),
+                              ),
 
-                                const SizedBox(height: 14),
+                              const SizedBox(height: 18),
 
-                                // Verify OTP Button
-                                CustomButton(
-                                  label: AppStrings.verifyOtp,
-                                  isLoading: _isVerifying,
-                                  height: 52,
-                                  onPressed: _handleVerifyOtp,
-                                ),
+                              // Verify OTP Button
+                              CustomButton(
+                                label: AppStrings.verifyOtp,
+                                isLoading: _isVerifying,
+                                height: 52,
+                                onPressed: _handleVerifyOtp,
+                              ),
 
-                                const SizedBox(height: 14),
+                              const SizedBox(height: 16),
 
-                                // Security Expiration Notice Card
-                                const SecurityNoticeCard(),
+                              // Security Expiration Notice Card
+                              const SecurityNoticeCard(),
 
-                                const SizedBox(height: 6),
-                              ],
-                            ),
+                              const SizedBox(height: 6),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
 
           // 2. Top Bar over Image: Back Button (Left) & Help Button (Right)
