@@ -190,7 +190,7 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final imageHeight = (size.height * 0.28).clamp(180.0, 230.0);
+    final imageHeight = (size.height * 0.44).clamp(300.0, 420.0);
     const overlapHeight = 16.0;
     final timerText = '00:${_countdown.toString().padLeft(2, '0')}';
 
@@ -216,7 +216,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
 
-              // Curved Container with Content - moved significantly higher up!
+              // Curved Container with Content - moved further down to decrease its height
               Expanded(
                 child: Transform.translate(
                   offset: const Offset(0, -overlapHeight),
@@ -239,9 +239,11 @@ class _OtpScreenState extends State<OtpScreen> {
                     child: SafeArea(
                       top: false,
                       child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 480),
-                          child: Column(
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -390,6 +392,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                 ),
               ),
+            ),
             ],
           ),
 
