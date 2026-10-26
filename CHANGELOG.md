@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- Resolved static analysis error in `upload_document_screen.dart` with dual-mode `List<PlatformFile>` (v12/v13) and `FilePickerResult` (v11) extraction.
+- Restored multi-platform compatibility across iOS, Android, Web, Windows, macOS, and Linux.
+
 ## 1.0.1
 
 - Expanded dependency constraints to support `cupertino_icons` 2.x and `file_picker` 12.x/13.x.

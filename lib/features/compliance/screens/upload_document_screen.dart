@@ -83,12 +83,32 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
   Future<void> _handleChooseFile() async {
     try {
-      final result = await FilePicker.pickFiles(
+      final dynamic result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc'],
       );
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
+      if (result == null) return;
+
+      final List<PlatformFile> pickedFiles = <PlatformFile>[];
+      if (result is List) {
+        for (final item in result) {
+          if (item is PlatformFile) {
+            pickedFiles.add(item);
+          }
+        }
+      } else {
+        final dynamic legacyFiles = (result as dynamic).files;
+        if (legacyFiles is List) {
+          for (final item in legacyFiles) {
+            if (item is PlatformFile) {
+              pickedFiles.add(item);
+            }
+          }
+        }
+      }
+
+      if (pickedFiles.isNotEmpty) {
+        final file = pickedFiles.first;
         final sizeMb = (file.size / (1024 * 1024)).toStringAsFixed(1);
         setState(() {
           _hasSelectedFile = true;
