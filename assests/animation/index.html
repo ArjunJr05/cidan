@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CIDAN — circular analysis motion (portrait 9:16)</title>
+    <style>
+        :root {
+            --navy: #172033;
+            --muted: #6B7391
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            background: #F5F6FC;
+            font-family: "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif
+        }
+
+        #stage {
+            display: block;
+            width: 405px;
+            height: 720px;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(48, 36, 119, .14)
+        }
+
+        .ui {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .ui button {
+            font: inherit;
+            color: var(--navy);
+            background: #fff;
+            border: 1px solid #DDE0F2;
+            border-radius: 9px;
+            padding: 7px 14px;
+            cursor: pointer
+        }
+
+        .ui button:focus-visible {
+            outline: 2px solid #5B4BDB;
+            outline-offset: 2px
+        }
+
+        body.cap {
+            display: block;
+            min-height: 0;
+            background: #fff
+        }
+
+        body.cap #stage {
+            width: 540px;
+            height: 960px;
+            border-radius: 0;
+            box-shadow: none
+        }
+
+        body.cap .ui {
+            display: none
+        }
+
+        #L0,
+        #L1,
+        #L2,
+        #L3 {
+            display: none
+        }
+
+        text {
+            font-family: inherit;
+            fill: var(--navy)
+        }
+
+        .t17 {
+            font-size: 17px;
+            font-weight: 500
+        }
+
+        .t14 {
+            font-size: 14.5px;
+            font-weight: 500
+        }
+
+        .t12 {
+            font-size: 12.5px;
+            fill: var(--muted)
+        }
+
+        .pl {
+            font-size: 11.5px;
+            font-weight: 600
+        }
+    </style>
+</head>
+
+<body>
+    <svg id="stage" viewBox="0 0 540 960" aria-label="CIDAN regulatory circular analysis animation">
+        <defs>
+            <filter id="sh" x="-40%" y="-30%" width="180%" height="175%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="15" />
+                <feOffset dy="15" result="o1" />
+                <feFlood flood-color="#302477" flood-opacity=".13" />
+                <feComposite in2="o1" operator="in" result="s1" />
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" />
+                <feOffset dy="1" result="o2" />
+                <feFlood flood-color="#302477" flood-opacity=".09" />
+                <feComposite in2="o2" operator="in" result="s2" />
+                <feMerge>
+                    <feMergeNode in="s1" />
+                    <feMergeNode in="s2" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+            <filter id="shs" x="-30%" y="-40%" width="160%" height="190%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#302477" flood-opacity=".09" />
+            </filter>
+            <linearGradient id="gBtn" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#5B4BDB" />
+                <stop offset="1" stop-color="#8B5CF6" />
+            </linearGradient>
+            <linearGradient id="gWash" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="540" y2="960">
+                <stop offset="0" stop-color="#4A3CC8" />
+                <stop offset=".55" stop-color="#5B4BDB" />
+                <stop offset="1" stop-color="#8B5CF6" />
+            </linearGradient>
+            <linearGradient id="gBand" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#5B4BDB" stop-opacity="0" />
+                <stop offset="1" stop-color="#8B5CF6" stop-opacity=".2" />
+            </linearGradient>
+            <clipPath id="docClip">
+                <path
+                    d="M-74,-110H56L84,-82V100A10,10 0 0 1 74,110H-74A10,10 0 0 1 -84,100V-100A10,10 0 0 1 -74,-110Z" />
+            </clipPath>
+            <clipPath id="tintClip">
+                <rect id="tintRect" x="-90" y="-115" width="180" height="0" />
+            </clipPath>
+        </defs>
+        <rect width="540" height="960" fill="#fff" />
+
+        <g id="A">
+            <g id="doc" opacity="0">
+                <path d="M-74,-110H56L84,-82V100A10,10 0 0 1 74,110H-74A10,10 0 0 1 -84,100V-100A10,10 0 0 1 -74,-110Z"
+                    fill="#fff" stroke="#E3E5F4" filter="url(#sh)" />
+                <path d="M56,-110L84,-82H66A10,10 0 0 1 56,-92Z" fill="#F0F1FA" stroke="#E3E5F4"
+                    stroke-linejoin="round" />
+                <rect x="-62" y="-90" width="22" height="22" rx="7" fill="url(#gBtn)" />
+                <path d="M-51,-85L-45,-82.5V-77.5C-45,-74.5 -48,-73 -51,-72C-54,-73 -57,-74.5 -57,-77.5V-82.5Z"
+                    fill="#fff" opacity=".95" />
+                <text x="-32" y="-82" dy=".35em" style="font-size:11px;font-weight:700">RBI Circular</text>
+                <rect x="-32" y="-72" width="38" height="4" rx="2" fill="#E6E8F4" />
+                <rect x="-62" y="-52" width="124" height="1" fill="#ECEEF8" />
+                <g id="linesG"></g>
+                <g clip-path="url(#tintClip)">
+                    <g id="linesB"></g>
+                </g>
+                <g clip-path="url(#docClip)">
+                    <rect id="band" x="-84" y="-70" width="168" height="70" fill="url(#gBand)" opacity="0" />
+                </g>
+                <g id="beam" opacity="0">
+                    <rect x="-98" y="-5" width="196" height="10" rx="5" fill="#8B5CF6" opacity=".18" />
+                    <rect x="-98" y="-1.2" width="196" height="2.4" rx="1.2" fill="#5B4BDB" />
+                    <circle cx="-98" r="3" fill="#5B4BDB" />
+                    <circle cx="98" r="3" fill="#5B4BDB" />
+                </g>
+            </g>
+            <g id="rows"></g>
+            <g id="stepper" opacity="0" transform="translate(0 330)"></g>
+            <g id="L0" opacity="0">
+                <g class="ind">
+                    <circle r="8.5" fill="none" stroke="#E6E8F5" stroke-width="2.4" />
+                    <circle id="r0" r="8.5" fill="none" stroke="#5B4BDB" stroke-width="2.4" stroke-linecap="round" />
+                </g><text class="t17" dy=".35em">Uploading circular...</text>
+            </g>
+            <g id="L1" opacity="0">
+                <g class="ind">
+                    <circle r="8.5" fill="none" stroke="#E6E8F5" stroke-width="2.4" />
+                    <circle id="r1" r="8.5" fill="none" stroke="#5B4BDB" stroke-width="2.4" stroke-linecap="round" />
+                </g><text class="t17" dy=".35em">Extracting obligations...</text>
+            </g>
+            <g id="L2" opacity="0">
+                <g class="ind">
+                    <circle r="8.5" fill="none" stroke="#E6E8F5" stroke-width="2.4" />
+                    <circle id="r2" r="8.5" fill="none" stroke="#5B4BDB" stroke-width="2.4" stroke-linecap="round" />
+                </g><text class="t17" dy=".35em">Mapping to your existing rules...</text>
+            </g>
+            <g id="L3" opacity="0">
+                <g class="ind">
+                    <circle r="8.5" fill="none" stroke="#E6E8F5" stroke-width="2.4" />
+                    <circle id="r3" r="8.5" fill="none" stroke="#5B4BDB" stroke-width="2.4" stroke-linecap="round" />
+                </g><text class="t17" dy=".35em">Backtesting in sandbox...</text>
+            </g>
+        </g>
+
+        <circle id="wash" cx="270" cy="440" r="0" fill="url(#gWash)" />
+        <g id="stitle" opacity="0"><text id="st1" x="270" y="530" text-anchor="middle"
+                style="font-size:25px;font-weight:700">Analysis complete</text><text id="st2" x="270" y="557"
+                text-anchor="middle" class="t12" style="font-size:14px">Your compliance report is ready</text></g>
+        <g id="succ" opacity="0">
+            <circle id="glow" r="58" fill="#16A37F" opacity=".12" />
+            <circle id="halo" r="46" fill="none" stroke="#16A37F" stroke-width="3" opacity="0" />
+            <circle r="46" fill="#fff" filter="url(#shs)" />
+            <circle r="40" fill="none" stroke="#E3F6EF" stroke-width="5" />
+            <circle id="sring" r="40" fill="none" stroke="#16A37F" stroke-width="5" stroke-linecap="round"
+                transform="rotate(-90)" stroke-dasharray="251.3" stroke-dashoffset="251.3" />
+            <path id="sck" d="M-15,2L-5,12L16,-11" fill="none" stroke="#16A37F" stroke-width="5.4"
+                stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="46" stroke-dashoffset="46" />
+        </g>
+    </svg>
+    <div class="ui"><button id="replay">Replay</button><button id="pause">Pause</button><span id="clock"></span></div>
+
+    <script>
+        // Animation ends once "Analysis complete" has appeared and faded out (~7.6s); short hold on the purple + check.
+        const T = 8.4, CAP = new URLSearchParams(location.search).has('capture');
+        if (CAP) document.body.classList.add('cap');
+        const $ = id => document.getElementById(id), clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+        function bez(x1, y1, x2, y2) { return x => { if (x <= 0) return 0; if (x >= 1) return 1; let lo = 0, hi = 1, t = x; for (let i = 0; i < 26; i++) { const c = 3 * x1 * t * (1 - t) * (1 - t) + 3 * x2 * t * t * (1 - t) + t * t * t; c < x ? lo = t : hi = t; t = (lo + hi) / 2 } return 3 * y1 * t * (1 - t) * (1 - t) + 3 * y2 * t * t * (1 - t) + t * t * t } }
+        const eOut = bez(.22, 1, .36, 1), eIO = bez(.65, 0, .35, 1), eSoft = bez(.4, 0, .2, 1), ePop = bez(.3, 1.18, .5, 1);
+        const seg = (t, a, d, e = eIO) => e(clamp((t - a) / d));
+        const hx = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+        const mix = (a, b, k) => { const A = hx(a), B = hx(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',') + ')' };
+        const set = (el, o) => { for (const k in o) el.setAttribute(k, o[k]) };
+        const IND = '#5B4BDB', GRN = '#16A37F';
+
+        // document lines
+        const L = [[-62, -38, 124], [-62, -26, 106], [-62, -14, 118], [-62, -2, 84], [-62, 14, 52], [0, 14, 62], [-62, 26, 60], [0, 26, 44], [-62, 62, 124], [-62, 74, 98]];
+        const ls = c => L.map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="5" rx="2.5" fill="${c}"/>`).join('') + `<path d="M-62,94c7,-13,12,9,19,-1s11,-9,17,2" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+        $('linesG').innerHTML = ls('#E6E8F2'); $('linesB').innerHTML = ls('#D3CCF8');
+
+        // rows
+        const OB = ['Customer due diligence', 'Record retention period', 'Reporting timeline'];
+        $('rows').innerHTML = OB.map((r, i) => `<g id="row${i}"><rect x="-180" width="360" height="40" rx="12" fill="#fff" stroke="#E3E5F4" filter="url(#shs)"/>
+<g transform="translate(-154 20)"><circle id="dot${i}" r="4.5" fill="#8B5CF6"/><circle id="trk${i}" r="9" fill="none" stroke="#E6E8F5" stroke-width="2.4" opacity="0"/><circle id="sp${i}" r="9" fill="none" stroke="${IND}" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="15 42" opacity="0"/>
+<g id="ck${i}" opacity="0"><circle r="9.5" fill="#E3F6EF" stroke="${GRN}" stroke-width="1.6"/><path d="M-4,.6L-1.3,3.3L4.2,-2.7" fill="none" stroke="${GRN}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+<text x="-130" y="20" dy=".35em" class="t14">${r}</text>
+<g id="pa${i}" opacity="0"><rect x="74" y="9" width="94" height="22" rx="11" fill="#EFEAFE"/><text x="121" y="20.5" dy=".35em" text-anchor="middle" class="pl" style="fill:#5B3FD0">Rule mapped</text></g>
+<g id="pb${i}" opacity="0"><rect x="70" y="9" width="98" height="22" rx="11" fill="#E3F6EF"/><text x="119" y="20.5" dy=".35em" text-anchor="middle" class="pl" style="fill:#12805F">Tests passed</text></g></g>`).join('');
+
+        // stepper (horizontal, bottom of portrait frame)
+        const SN = ['Upload', 'Extract', 'Map rules', 'Backtest'], SX = [90, 210, 330, 450], SW = 360;
+        $('stepper').innerHTML = `<rect x="90" y="477" width="${SW}" height="3" rx="1.5" fill="#E6E8F5"/><rect id="sfill" x="90" y="477" width="0" height="3" rx="1.5" fill="url(#gBtn)"/>` +
+            SN.map((n, i) => `<g transform="translate(${SX[i]} 478.5)"><circle id="nc${i}" r="11" fill="#fff" stroke="#D9DCF0" stroke-width="2"/><circle id="nd${i}" r="3.6" fill="${IND}" opacity="0"/><path id="nk${i}" d="M-4.4,.4L-1.5,3.3L4.6,-2.9" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="12" stroke-dashoffset="12"/><text id="nt${i}" y="30" text-anchor="middle" class="t12" style="font-size:13px">${n}</text></g>`).join('');
+
+        const LB = [[.45, 1.5, .2], [1.55, 3.05, .2], [3.1, 4.4, .2], [4.45, 5.75, .3]];
+        function layout() { for (let i = 0; i < 4; i++) { const g = $('L' + i), tx = g.querySelector('text'), w = tx.getComputedTextLength(), tot = 22 + 12 + w; g.dataset.ix = -tot / 2 + 11; tx.setAttribute('x', -tot / 2 + 34) } }
+        const ring = (el, f, rot) => { const C = 2 * Math.PI * +el.getAttribute('r'); set(el, { 'stroke-dasharray': `${Math.max(f, .04) * C} ${C}`, transform: `rotate(${rot - 90})` }) };
+
+        function render(t) {
+            // doc flies in from bottom-left to top-centre
+            const u = seg(t, 0, 1.05, eOut), P0 = [-90, 620], P1 = [120, 170], P2 = [270, 330];
+            const x = (1 - u) ** 2 * P0[0] + 2 * (1 - u) * u * P1[0] + u * u * P2[0], y = (1 - u) ** 2 * P0[1] + 2 * (1 - u) * u * P1[1] + u * u * P2[1];
+            const rot = -8 * (1 - seg(t, 0, 1.05, eSoft)), fy = 1.5 * Math.sin(2 * Math.PI * clamp((t - 1.05) / (5.7 - 1.05)));
+            set($('doc'), { transform: `translate(${x} ${y + fy}) rotate(${rot}) scale(${.92 + .08 * u})`, opacity: seg(t, 0, .3, eSoft) });
+            // scene A fade
+            const aOut = seg(t, 5.75, .35, eSoft); set($('A'), { opacity: 1 - aOut, transform: `translate(270 480) scale(${1 - .03 * aOut}) translate(-270 -480)` });
+            // scan
+            const p = seg(t, 1.7, 1), by = -110 + 220 * p, bo = seg(t, 1.7, .12, eSoft) * (1 - seg(t, 2.7, .2, eSoft));
+            set($('beam'), { transform: `translate(0 ${by})`, opacity: bo }); set($('band'), { transform: `translate(0 ${by})`, opacity: bo });
+            $('tintRect').setAttribute('height', clamp(by + 115, 0, 230));
+            // rows (stacked under the document)
+            for (let i = 0; i < 3; i++) {
+                const s = 2.25 + .25 * i, ap = seg(t, s, .45, eOut), sa = seg(t, 4.45 + .1 * i, .15, eSoft), c = seg(t, 4.95 + .25 * i, .2, eOut), q = seg(t, 3.3 + .2 * i, .35, ePop);
+                set($('row' + i), { opacity: ap, transform: `translate(270 ${490 + 52 * i + (1 - ap) * 14})` });
+                set($('dot' + i), { opacity: 1 - sa }); set($('trk' + i), { opacity: sa * (1 - c) }); set($('sp' + i), { opacity: sa * (1 - c), transform: `rotate(${(t - 4.45) * 420})` });
+                set($('ck' + i), { opacity: c, transform: `scale(${.8 + .2 * c})` });
+                set($('pa' + i), { opacity: clamp(q) * (1 - c), transform: `translate(121 20) scale(${.88 + .12 * q}) translate(-121 -20)` }); set($('pb' + i), { opacity: c });
+            }
+            // stepper
+            set($('stepper'), { opacity: seg(t, .6, .4, eSoft) });
+            $('sfill').setAttribute('width', SW * (seg(t, 1.1, .5) + seg(t, 2.6, .5) + seg(t, 4, .5)) / 3);
+            const aT = [.6, 1.6, 3.1, 4.5], dT = [1.5, 3, 4.4, 5.6];
+            for (let i = 0; i < 4; i++) {
+                const ac = seg(t, aT[i], .25, eOut), d = seg(t, dT[i], .25, eOut);
+                set($('nc' + i), { fill: mix('#FFFFFF', IND, d), stroke: mix('#D9DCF0', IND, Math.max(ac, d)) });
+                set($('nd' + i), { opacity: ac * (1 - d), r: 3.6 + .6 * Math.sin(t * 6) }); set($('nk' + i), { 'stroke-dashoffset': 12 * (1 - d) });
+                $('nt' + i).style.fill = mix('#6B7391', '#172033', Math.max(ac, d));
+            }
+            // labels
+            LB.forEach(([a, b, d], i) => {
+                const g = $('L' + i), inn = seg(t, a, .3, eOut), out = seg(t, b, d, eSoft);
+                set(g, { opacity: inn * (1 - out), transform: `translate(270 ${110 + (1 - inn) * 8 - 6 * out})` }); g.querySelector('.ind').setAttribute('transform', `translate(${g.dataset.ix} 0)`)
+            });
+            ring($('r0'), seg(t, .5, 1), 0); ring($('r1'), .28, (t - 1.55) * 400); ring($('r2'), .28, (t - 3.1) * 400); ring($('r3'), .28, (t - 4.45) * 400);
+
+            // success moment: check pops, "Analysis complete" shows then fades; purple wash + check stay to the end
+            const sOp = seg(t, 5.9, .15, eSoft), ss = .85 + .15 * seg(t, 5.9, .4, eOut);
+            set($('succ'), { opacity: sOp, transform: `translate(270 440) scale(${ss})` });
+            set($('sring'), { 'stroke-dashoffset': 251.3 * (1 - seg(t, 6.05, .5)) }); set($('sck'), { 'stroke-dashoffset': 46 * (1 - seg(t, 6.5, .35, eOut)) });
+            const hp = seg(t, 6.7, .75, eOut); set($('halo'), { r: 46 + 38 * hp, opacity: .4 * (1 - hp) * (t > 6.7 ? 1 : 0) });
+            set($('glow'), { opacity: .12 * seg(t, 6.05, .4) * .75, r: 58 + 3 * Math.sin(t * 5) });
+            const wk = seg(t, 6.9, .3); set($('stitle'), { opacity: seg(t, 6.3, .3, eOut) * (1 - seg(t, 7.35, .25, eSoft)) });
+            $('st1').style.fill = mix('#172033', '#FFFFFF', wk); $('st2').style.fill = mix('#6B7391', '#E4E0FF', wk);
+            set($('wash'), { r: 700 * seg(t, 6.9, .85), opacity: 1 });
+
+            if ($('clock')) $('clock').textContent = t.toFixed(1) + ' / ' + T + 's';
+        }
+        window.renderAt = t => render(t); window.DURATION = T;
+        window.ready = document.fonts.ready.then(() => { layout(); render(0) });
+        if (!CAP) {
+            let t0 = performance.now(), paused = false, pt = 0;
+            window.ready.then(() => requestAnimationFrame(function f(now) { if (!paused) { pt = ((now - t0) / 1000) % T; render(pt) } requestAnimationFrame(f) }));
+            $('replay').onclick = () => { t0 = performance.now(); paused = false; $('pause').textContent = 'Pause' };
+            $('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Resume' : 'Pause'; if (!paused) t0 = performance.now() - pt * 1000 };
+        }
+    </script>
+</body>
+
+</html>

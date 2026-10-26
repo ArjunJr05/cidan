@@ -5,5 +5,5 @@ class AppAssets {
   static const String otpIllustration = 'assests/Verify Your Email with Cidan.png';
   static const String uploadBanner = 'assests/Regulatory Compliance AI Hero Banner.png';
   static const String verifiedChecklist = 'assests/Verified Bank Checklist.png';
-  static const String loadingVideo = 'assests/animation/loading-video.mp4';
+  static const String bottomWaveDecoration = 'assests/Pastel Lavender Waves and Leaves.png';
 }

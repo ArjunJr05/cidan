@@ -7,8 +7,14 @@ class SecurityNoticeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isCompact = size.height < 720;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 16,
+        vertical: isCompact ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(16),
@@ -18,41 +24,41 @@ class SecurityNoticeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: isCompact ? 32 : 38,
+            height: isCompact ? 32 : 38,
             decoration: BoxDecoration(
               color: AppColors.primary.withAlpha(40),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lock_rounded,
               color: AppColors.primary,
-              size: 20,
+              size: isCompact ? 17 : 20,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isCompact ? 10 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Text(
                   AppStrings.expiryTitle,
                   style: TextStyle(
                     fontFamily: 'Poppins',
-                    fontSize: 13,
+                    fontSize: isCompact ? 12 : 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   AppStrings.expirySubtitle,
                   style: TextStyle(
                     fontFamily: 'Poppins',
-                    fontSize: 12,
+                    fontSize: isCompact ? 11 : 12,
                     color: AppColors.textSecondary,
-                    height: 1.3,
+                    height: 1.25,
                   ),
                 ),
               ],

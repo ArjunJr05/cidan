@@ -34,8 +34,12 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  file_picker: ^13.2.0
+  file_picker: 11.0.3
   video_player: ^2.9.2
+  supabase_flutter: ^2.18.3
+  mailer: ^7.2.0
+  shared_preferences: ^2.5.5
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -64,10 +68,13 @@ flutter:
     - assests/
     - assests/fonts/
     - assests/animation/
+    - assests/videos/
+    - assets/videos/
     - assests/Secure Banking Made Simple.png
     - assests/Verify Your Email with Cidan.png
     - assests/Regulatory Compliance AI Hero Banner.png
     - assests/Verified Bank Checklist.png
+    - assests/Pastel Lavender Waves and Leaves.png
 
   fonts:
     - family: Poppins
