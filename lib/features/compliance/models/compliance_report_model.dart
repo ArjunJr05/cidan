@@ -1,16 +1,36 @@
-/// Complete model representing CIDAN Virtusa Agent Workflow Analysis Output
+/// Complete model representing CIDAN Virtusa Agent Workflow Analysis Output.
 class ComplianceReportModel {
+  /// Unique identifier of the regulatory compliance workflow run.
   final String workflowId;
+
+  /// Current workflow stage (e.g. awaiting_human_review, completed).
   final String stage;
+
+  /// Optional error message if the workflow encountered an issue.
   final String? error;
+
+  /// List of regulatory obligations extracted from the circular.
   final List<ObligationItem> obligations;
+
+  /// List of policy gap and compliance control findings.
   final List<FindingItem> findings;
+
+  /// Rule delta proposals staged for review.
   final List<dynamic> proposals;
+
+  /// Sandbox verification testcases executed against bank policies.
   final List<TestCaseItem> tests;
+
+  /// Executive summary and audit metadata.
   final ReportSummary report;
+
+  /// Output report file paths on disk.
   final ReportFiles? reportFiles;
+
+  /// Raw JSON payload returned by the Virtusa compliance agent.
   final Map<String, dynamic> rawJson;
 
+  /// Creates a new [ComplianceReportModel] instance.
   const ComplianceReportModel({
     required this.workflowId,
     required this.stage,
@@ -156,26 +176,63 @@ class ComplianceReportModel {
   };
 }
 
+/// Individual regulatory obligation extracted from circular.
 class ObligationItem {
+  /// Unique obligation identifier (e.g. OBL-001).
   final String obligationId;
+
+  /// Clause or section reference in circular.
   final String clauseId;
+
+  /// Obligation requirement text.
   final String text;
+
+  /// Scope of applicability.
   final String applicability;
+
+  /// Product sector (e.g. Personal Loan & Consumer Credit).
   final String productType;
+
+  /// Optional monetary threshold.
   final String? amountThreshold;
+
+  /// Currency code (e.g. INR).
   final String? currency;
+
+  /// Effective compliance date.
   final String effectiveDate;
+
+  /// Responsible department or function.
   final String responsibleFunction;
+
+  /// Required operational action.
   final String requiredAction;
+
+  /// Deadline or recurrence frequency.
   final String deadlineOrFrequency;
+
+  /// Stated regulatory exceptions.
   final List<dynamic> exceptions;
+
+  /// Source circular citation.
   final DocumentSource? source;
+
+  /// Supporting text excerpt.
   final String supportingExcerpt;
+
+  /// Model extraction confidence score (0.0 to 1.0).
   final double confidence;
+
+  /// Potential semantic ambiguities.
   final List<String> ambiguities;
+
+  /// Source label citation.
   final String sourceLabel;
+
+  /// Obligation audit status.
   final String status;
 
+  /// Creates a new [ObligationItem].
   const ObligationItem({
     required this.obligationId,
     required this.clauseId,
@@ -221,19 +278,42 @@ class ObligationItem {
   }
 }
 
+/// Compliance gap or policy provision finding item.
 class FindingItem {
+  /// Reference obligation ID.
   final String obligationId;
+
+  /// Audit finding status.
   final String status;
+
+  /// Matching provision from underwriting handbook if found.
   final String? matchingPolicyProvision;
+
+  /// Circular source citation.
   final DocumentSource? circularCitation;
+
+  /// Internal policy handbook citations.
   final List<dynamic> policyCitations;
+
+  /// Reasoning justifying the finding.
   final String reasoning;
+
+  /// Identified inconsistency or gap description.
   final String missingOrInconsistent;
+
+  /// Estimated operational impact.
   final String operationalImpact;
+
+  /// Recommended remediation action.
   final String recommendedAction;
+
+  /// Model finding confidence score.
   final double confidence;
+
+  /// Limitations in supporting evidence.
   final List<String> evidenceLimitations;
 
+  /// Creates a new [FindingItem].
   const FindingItem({
     required this.obligationId,
     required this.status,
@@ -267,14 +347,27 @@ class FindingItem {
   }
 }
 
+/// Regulatory document citation source reference.
 class DocumentSource {
+  /// Document unique ID.
   final String documentId;
+
+  /// Name of circular file.
   final String filename;
+
+  /// Type of document (e.g. circular, policy).
   final String documentType;
+
+  /// Page number in circular.
   final int page;
+
+  /// Text excerpt cited.
   final String excerpt;
+
+  /// Chunk ID from vector database.
   final String chunkId;
 
+  /// Creates a new [DocumentSource].
   const DocumentSource({
     required this.documentId,
     required this.filename,
@@ -296,15 +389,30 @@ class DocumentSource {
   }
 }
 
+/// Summary metadata and aggregated audit results.
 class ReportSummary {
+  /// Unique compliance report ID.
   final String reportId;
+
+  /// UTC generation timestamp.
   final String generatedAtUtc;
+
+  /// Processing status of the source circular.
   final String sourceStatus;
+
+  /// Regulatory disclaimer note.
   final String disclaimer;
+
+  /// Narrative analysis text.
   final Narrative narrative;
+
+  /// Quantitative compliance audit metrics.
   final ReportMetrics metrics;
+
+  /// Whether executive compliance officer sign-off is needed.
   final bool approvalRequired;
 
+  /// Creates a new [ReportSummary].
   const ReportSummary({
     required this.reportId,
     required this.generatedAtUtc,
@@ -328,13 +436,24 @@ class ReportSummary {
   }
 }
 
+/// Executive narrative synthesis generated by AI agent.
 class Narrative {
+  /// Executive summary paragraph.
   final String executiveSummary;
+
+  /// High-level operational impact.
   final String operationalImpact;
+
+  /// Actions recommended for human compliance reviewer.
   final List<String> recommendedHumanReviewActions;
+
+  /// Limitations in provided source evidence.
   final List<String> evidenceLimitations;
+
+  /// Readiness assessment for sanctioning.
   final String deploymentReadinessAssessment;
 
+  /// Creates a new [Narrative].
   const Narrative({
     required this.executiveSummary,
     required this.operationalImpact,
@@ -358,18 +477,39 @@ class Narrative {
   }
 }
 
+/// Key quantitative audit metrics and test pass counts.
 class ReportMetrics {
+  /// Total obligations extracted.
   final int obligationsExtracted;
+
+  /// Policy findings discovered.
   final int policyFindings;
+
+  /// Number of findings requiring human review.
   final int requiresHumanReviewCount;
+
+  /// Number of rule deltas generated.
   final int draftRulesGenerated;
+
+  /// Total sandbox backtests executed.
   final int testsTotal;
+
+  /// Backtests passed.
   final int testsPassed;
+
+  /// Backtests failed.
   final int testsFailed;
+
+  /// Backtests skipped.
   final int testsSkipped;
+
+  /// Backtests with invalid syntax.
   final int testsInvalid;
+
+  /// Overall pass rate (0.0 to 1.0).
   final double? testPassRate;
 
+  /// Creates a new [ReportMetrics].
   const ReportMetrics({
     required this.obligationsExtracted,
     required this.policyFindings,
@@ -400,12 +540,21 @@ class ReportMetrics {
   }
 }
 
+/// Sandbox backtest scenario verification item.
 class TestCaseItem {
+  /// Test case identifier (e.g. TC-001).
   final String id;
+
+  /// Name of test scenario.
   final String name;
+
+  /// Test outcome status (e.g. passed, failed).
   final String status;
+
+  /// Detailed test logs or diagnostic output.
   final String? resultDetails;
 
+  /// Creates a new [TestCaseItem].
   const TestCaseItem({
     required this.id,
     required this.name,

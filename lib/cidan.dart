@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 import 'main.dart';
 
 export 'main.dart' show CidanApp;
-export 'core/constants/app_strings.dart';
-export 'core/constants/app_assets.dart';
-export 'core/constants/app_colors.dart';
-export 'core/theme/app_theme.dart';
-export 'core/services/supabase_service.dart';
-export 'core/config/supabase_config.dart';
-export 'features/compliance/models/compliance_report_model.dart';
-export 'features/compliance/services/cidan_api_service.dart';
-export 'features/compliance/screens/upload_document_screen.dart';
-export 'features/compliance/screens/compliance_dashboard_screen.dart';
-export 'features/auth/screens/login_screen.dart';
-export 'features/auth/screens/otp_screen.dart';
+export 'core/services/supabase_service.dart' show SupabaseService;
+export 'features/compliance/models/compliance_report_model.dart'
+    show
+        ComplianceReportModel,
+        ObligationItem,
+        FindingItem,
+        TestCaseItem,
+        ReportSummary,
+        ReportMetrics,
+        DocumentSource;
 
 /// Entry point class for the CIDAN Regulatory Compliance AI Suite.
 ///
-/// Use [Cidan.application()] or the top-level convenience instance [cidan.application()]
+/// Use [Cidan.application] or the top-level convenience accessor `cidan.application()`
 /// to easily launch or embed CIDAN into any Flutter project.
 ///
 /// Example:
@@ -35,6 +33,7 @@ class Cidan {
   ///
   /// Anyone can call this method to mount CIDAN into their application.
   ///
+  /// - [key]: Optional widget key.
   /// - [isLoggedIn]: Defaults to `false`. Set to `true` to display the regulatory upload
   ///   dashboard directly.
   /// - [userEmail]: Optional email for pre-authenticated sessions.
@@ -68,11 +67,19 @@ const CidanInstance cidan = CidanInstance();
 
 /// Convenience class providing `cidan.application()` syntax.
 class CidanInstance {
+  /// Const constructor for global [cidan] instance.
   const CidanInstance();
 
   /// Returns the complete CIDAN Compliance & Regulatory AI application widget.
   ///
   /// Anyone can call this method to mount CIDAN into their application.
+  ///
+  /// - [key]: Optional widget key.
+  /// - [isLoggedIn]: Defaults to `false`. Set to `true` to display the regulatory upload
+  ///   dashboard directly.
+  /// - [userEmail]: Optional email for pre-authenticated sessions.
+  /// - [standalone]: Defaults to `true` (returns [MaterialApp]). When `false`, returns
+  ///   an embeddable themed widget that can be pushed onto an existing [Navigator].
   Widget application({
     Key? key,
     bool isLoggedIn = false,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'cidan.dart';
 import 'core/constants/app_strings.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
@@ -30,7 +29,7 @@ void main() async {
     ),
   );
 
-  runApp(cidan.application(
+  runApp(CidanApp(
     isLoggedIn: isLoggedIn && userEmail.isNotEmpty,
     userEmail: userEmail,
   ));
@@ -38,13 +37,19 @@ void main() async {
 
 /// Root widget for the CIDAN Regulatory Compliance AI Application.
 ///
-/// Can be used as a standalone application via [runApp] or embedded within an
-/// existing Flutter application via [cidan.application()] or [Cidan.application()].
+/// Can be used as a standalone application via `runApp()` or embedded within an
+/// existing Flutter application via `cidan.application()`.
 class CidanApp extends StatelessWidget {
+  /// Whether the application starts in the authenticated upload state.
   final bool isLoggedIn;
+
+  /// User email for pre-authenticated sessions or deep-linking.
   final String userEmail;
+
+  /// Whether to return a standalone [MaterialApp] (`true`, default) or an embeddable [Theme] (`false`).
   final bool standalone;
 
+  /// Creates a new [CidanApp] widget.
   const CidanApp({
     super.key,
     this.isLoggedIn = false,

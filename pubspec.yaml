@@ -1,6 +1,6 @@
 name: cidan
 description: AI-powered regulatory compliance, circular ingestion, and policy validation engine for Flutter applications.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/ArjunJr05/cidan
 repository: https://github.com/ArjunJr05/cidan
 issue_tracker: https://github.com/ArjunJr05/cidan/issues
@@ -13,13 +13,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
-  file_picker: ^11.0.3
-  video_player: ^2.9.2
-  supabase_flutter: ^2.18.3
-  mailer: ^7.2.0
-  shared_preferences: ^2.5.5
-  path_provider: ^2.1.5
+  cupertino_icons: '>=1.0.8 <3.0.0'
+  file_picker: '>=11.0.3 <14.0.0'
+  video_player: '>=2.9.2 <3.0.0'
+  supabase_flutter: '>=2.18.3 <3.0.0'
+  mailer: '>=7.2.0 <8.0.0'
+  shared_preferences: '>=2.5.5 <3.0.0'
+  path_provider: '>=2.1.5 <3.0.0'
 
 dev_dependencies:
   flutter_test:
