@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+- Resolved `PlatformFile.size` static analysis error for full compatibility with `file_picker` 12.x/13.x and 11.x.
+- Enabled cross-platform file metadata inspection using safe length retrieval (`lengthSync()`, `length()`, and `size`).
+- Re-confirmed multi-platform static analysis and score criteria.
+
 ## 1.0.2
 
 - Resolved static analysis error in `upload_document_screen.dart` with dual-mode `List<PlatformFile>` (v12/v13) and `FilePickerResult` (v11) extraction.

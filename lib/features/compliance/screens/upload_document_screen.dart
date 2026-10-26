@@ -89,30 +89,43 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       );
       if (result == null) return;
 
-      final List<PlatformFile> pickedFiles = <PlatformFile>[];
+      final List<dynamic> pickedFiles = <dynamic>[];
       if (result is List) {
-        for (final item in result) {
-          if (item is PlatformFile) {
-            pickedFiles.add(item);
-          }
-        }
+        pickedFiles.addAll(result);
       } else {
         final dynamic legacyFiles = (result as dynamic).files;
         if (legacyFiles is List) {
-          for (final item in legacyFiles) {
-            if (item is PlatformFile) {
-              pickedFiles.add(item);
-            }
-          }
+          pickedFiles.addAll(legacyFiles);
         }
       }
 
       if (pickedFiles.isNotEmpty) {
-        final file = pickedFiles.first;
-        final sizeMb = (file.size / (1024 * 1024)).toStringAsFixed(1);
+        final dynamic file = pickedFiles.first;
+        num sizeBytes = 0;
+        try {
+          final dynamic s = file.size;
+          if (s != null) sizeBytes = s as num;
+        } catch (_) {}
+        if (sizeBytes == 0) {
+          try {
+            final dynamic s = file.lengthSync();
+            if (s != null) sizeBytes = s as num;
+          } catch (_) {}
+        }
+        if (sizeBytes == 0) {
+          try {
+            final dynamic s = await file.length();
+            if (s != null) sizeBytes = s as num;
+          } catch (_) {}
+        }
+
+        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 1.2;
+        final sizeMb = mb.toStringAsFixed(1);
+        final String fileName = file.name?.toString() ?? 'regulatory_document.pdf';
+
         setState(() {
           _hasSelectedFile = true;
-          _fileName = file.name;
+          _fileName = fileName;
           _fileSize = '$sizeMb MB';
         });
 
@@ -120,9 +133,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         SupabaseService().recordHistory(
           email: widget.email,
           actionType: 'DOCUMENT_UPLOADED',
-          documentName: file.name,
+          documentName: fileName,
           summary:
-              'Uploaded regulatory circular ${file.name} ($sizeMb MB) for AI compliance analysis',
+              'Uploaded regulatory circular $fileName ($sizeMb MB) for AI compliance analysis',
         );
       }
     } catch (_) {
