@@ -262,18 +262,18 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
-            builder: (_) => ComplianceDashboardScreen(
-              report: report,
-              uploadedFileName: file,
-              userEmail: widget.email,
-              initialApproved: false,
-            ),
-          ),
-        )
+      MaterialPageRoute(
+        builder: (_) => ComplianceDashboardScreen(
+          report: report,
+          uploadedFileName: file,
+          userEmail: widget.email,
+          initialApproved: false,
+        ),
+      ),
+    )
         .then((_) {
-          _loadRecentReports();
-        });
+      _loadRecentReports();
+    });
   }
 
   void _openReportFromHistory(Map<String, dynamic> item) {
@@ -287,18 +287,18 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
-            builder: (_) => ComplianceDashboardScreen(
-              report: report,
-              uploadedFileName: filename,
-              userEmail: widget.email,
-              initialApproved: isDeployed,
-            ),
-          ),
-        )
+      MaterialPageRoute(
+        builder: (_) => ComplianceDashboardScreen(
+          report: report,
+          uploadedFileName: filename,
+          userEmail: widget.email,
+          initialApproved: isDeployed,
+        ),
+      ),
+    )
         .then((_) {
-          _loadRecentReports();
-        });
+      _loadRecentReports();
+    });
   }
 
   String _getGreeting() {
@@ -651,9 +651,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           height:
                               (size.height * (_hasSelectedFile ? 0.14 : 0.19))
                                   .clamp(
-                                    90.0,
-                                    _hasSelectedFile ? 120.0 : 160.0,
-                                  ),
+                            90.0,
+                            _hasSelectedFile ? 120.0 : 160.0,
+                          ),
                           child: Image.asset(
                             AppAssets.uploadBanner,
                             width: double.infinity,
@@ -725,9 +725,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     final textColor = _isPurpleBg ? Colors.white : const Color(0xFF172033);
     final spinnerColor = _isPurpleBg ? Colors.white : const Color(0xFF5B4BDB);
-    final spinnerTrackColor = _isPurpleBg
-        ? Colors.white.withAlpha(70)
-        : const Color(0xFFE6E8F5);
+    final spinnerTrackColor =
+        _isPurpleBg ? Colors.white.withAlpha(70) : const Color(0xFFE6E8F5);
     final closeColor = _isPurpleBg ? Colors.white : const Color(0xFF64748B);
 
     return Scaffold(
@@ -899,9 +898,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   // Page 1: Initial Drag & Drop View matching uploaded mockup
   Widget _buildInitialUploadContent(Size size) {
     final isCompact = size.height < 720;
-    final cloudIconSize = _hasSelectedFile
-        ? 28.0
-        : (size.height * 0.075).clamp(44.0, 64.0);
+    final cloudIconSize =
+        _hasSelectedFile ? 28.0 : (size.height * 0.075).clamp(44.0, 64.0);
     final dragTitleFontSize = _hasSelectedFile
         ? (isCompact ? 13.0 : 14.5)
         : (size.height * 0.021).clamp(15.0, 17.5);
@@ -1113,8 +1111,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             greeting == 'Good Morning'
                                 ? Icons.wb_sunny_rounded
                                 : (greeting == 'Good Afternoon'
-                                      ? Icons.wb_twilight_rounded
-                                      : Icons.nights_stay_rounded),
+                                    ? Icons.wb_twilight_rounded
+                                    : Icons.nights_stay_rounded),
                             size: 13,
                             color: const Color(0xFFF59E0B),
                           ),
@@ -1330,9 +1328,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         final now = DateTime.now();
         final diff = now.difference(dt);
         if (diff.inMinutes < 60) {
-          timeLabel = diff.inMinutes <= 1
-              ? 'Just now'
-              : '${diff.inMinutes}m ago';
+          timeLabel =
+              diff.inMinutes <= 1 ? 'Just now' : '${diff.inMinutes}m ago';
         } else if (diff.inHours < 24) {
           timeLabel = '${diff.inHours}h ago';
         } else {
@@ -1942,9 +1939,8 @@ class _CloudUploadIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = customSize ?? (isCompact ? 36.0 : 52.0);
-    final w = customSize != null
-        ? customSize! * 1.45
-        : (isCompact ? 54.0 : 76.0);
+    final w =
+        customSize != null ? customSize! * 1.45 : (isCompact ? 54.0 : 76.0);
     return SizedBox(
       width: w,
       height: h,

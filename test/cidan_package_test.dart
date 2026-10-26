@@ -37,7 +37,8 @@ void main() {
       expect(find.byType(LoginScreen), findsOneWidget);
     });
 
-    testWidgets('4. cidan.application(isLoggedIn: true) renders UploadDocumentScreen',
+    testWidgets(
+        '4. cidan.application(isLoggedIn: true) renders UploadDocumentScreen',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         cidan.application(
