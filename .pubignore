@@ -1,0 +1,11 @@
+# Environment secrets
+.env
+.env.*
+
+# IDE files
+.idea/
+*.iml
+
+# Build & test scratch files
+build/
+test/fresh_logcat.txt

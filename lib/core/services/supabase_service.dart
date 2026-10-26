@@ -34,9 +34,24 @@ class SupabaseService {
   /// Check whether Supabase is connected and ready
   bool get isConnected => _isInitialized && _client != null;
 
-  /// Initialize Supabase connection
-  Future<void> initialize() async {
-    if (!SupabaseConfig.isConfigured) {
+  /// Initialize Supabase connection (optionally with custom credentials)
+  Future<void> initialize({
+    String? customUrl,
+    String? customAnonKey,
+  }) async {
+    final url = (customUrl != null && customUrl.isNotEmpty)
+        ? customUrl
+        : SupabaseConfig.supabaseUrl;
+    final anonKey = (customAnonKey != null && customAnonKey.isNotEmpty)
+        ? customAnonKey
+        : SupabaseConfig.supabaseAnonKey;
+
+    final isConfigured = url.isNotEmpty &&
+        !url.contains('YOUR_SUPABASE') &&
+        anonKey.isNotEmpty &&
+        !anonKey.contains('YOUR_SUPABASE');
+
+    if (!isConfigured) {
       debugPrint(
         'ℹ️ [CIDAN Supabase] Credentials not configured yet. Operating in local mode until keys are provided.',
       );
@@ -46,9 +61,9 @@ class SupabaseService {
     try {
       // ignore: deprecated_member_use
       await Supabase.initialize(
-        url: SupabaseConfig.supabaseUrl,
+        url: url,
         // ignore: deprecated_member_use
-        anonKey: SupabaseConfig.supabaseAnonKey,
+        anonKey: anonKey,
       );
       _client = Supabase.instance.client;
       _isInitialized = true;

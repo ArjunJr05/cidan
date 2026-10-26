@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'cidan.dart';
 import 'core/constants/app_strings.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
@@ -10,7 +11,7 @@ import 'features/compliance/screens/upload_document_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase service (safe: handles missing/unconfigured keys gracefully)
+  // Initialize Supabase service
   await SupabaseService().initialize();
 
   // Check persistent session in SharedPreferences
@@ -18,7 +19,7 @@ void main() async {
   final isLoggedIn = prefs.getBool('cidan_is_logged_in') ?? false;
   final userEmail = prefs.getString('cidan_user_email') ?? '';
 
-  // Set system UI overlay style for seamless transparent status bar
+  // Set system UI overlay style for transparent status bar
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -29,31 +30,46 @@ void main() async {
     ),
   );
 
-  runApp(CidanApp(
+  runApp(cidan.application(
     isLoggedIn: isLoggedIn && userEmail.isNotEmpty,
     userEmail: userEmail,
   ));
 }
 
+/// Root widget for the CIDAN Regulatory Compliance AI Application.
+///
+/// Can be used as a standalone application via [runApp] or embedded within an
+/// existing Flutter application via [cidan.application()] or [Cidan.application()].
 class CidanApp extends StatelessWidget {
   final bool isLoggedIn;
   final String userEmail;
+  final bool standalone;
 
   const CidanApp({
     super.key,
     this.isLoggedIn = false,
     this.userEmail = '',
+    this.standalone = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '${AppStrings.appName} - ${AppStrings.appTagline}',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: isLoggedIn
-          ? UploadDocumentScreen(email: userEmail)
-          : const LoginScreen(),
+    final home = isLoggedIn
+        ? UploadDocumentScreen(email: userEmail)
+        : const LoginScreen();
+
+    if (standalone) {
+      return MaterialApp(
+        title: '${AppStrings.appName} - ${AppStrings.appTagline}',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: home,
+      );
+    }
+
+    return Theme(
+      data: AppTheme.lightTheme,
+      child: home,
     );
   }
 }
