@@ -4,7 +4,7 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static const String fontFamily = 'Poppins';
+  static const String fontFamily = 'packages/cidan/Poppins';
 
   static ThemeData get lightTheme {
     const baseTextTheme = Typography.blackMountainView;

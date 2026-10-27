@@ -162,7 +162,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
           ),
           content: const Text(
             'Please choose a regulatory document first.',
-            style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
+            style: TextStyle(fontFamily: 'packages/cidan/Poppins', fontSize: 13),
           ),
         ),
       );
@@ -189,12 +189,14 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     try {
       _videoController = VideoPlayerController.asset(
         'assets/videos/cidan_analysis.mp4',
+        package: 'cidan',
       );
       await _videoController!.initialize();
     } catch (_) {
       try {
         _videoController = VideoPlayerController.asset(
           'assests/videos/cidan_analysis.mp4',
+          package: 'cidan',
         );
         await _videoController!.initialize();
       } catch (_) {}
@@ -345,7 +347,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             Text(
               'Sign Out',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
               ),
@@ -355,7 +357,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         content: const Text(
           'Are you sure you want to sign out? You will need to verify with OTP upon next login.',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'packages/cidan/Poppins',
             fontSize: 13.5,
             color: Color(0xFF475569),
           ),
@@ -365,7 +367,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF64748B)),
+              style: TextStyle(fontFamily: 'packages/cidan/Poppins', color: Color(0xFF64748B)),
             ),
           ),
           ElevatedButton(
@@ -381,7 +383,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             child: const Text(
               'Sign Out',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -465,7 +467,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         'CIDAN AI Assistant',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -474,7 +476,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         'Banking Regulatory Copilot',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 12.5,
                           color: Color(0xFF64748B),
                         ),
@@ -488,7 +490,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             const Text(
               'How can I help you with this regulatory filing?',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0F172A),
@@ -525,7 +527,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 child: const Text(
                   'Close',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
@@ -553,7 +555,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
@@ -562,7 +564,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 Text(
                   desc,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 12,
                     color: Color(0xFF64748B),
                   ),
@@ -599,10 +601,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 opacity: 0.95,
                 child: Image.asset(
                   AppAssets.bottomWaveDecoration,
+                  package: 'cidan',
                   width: double.infinity,
                   height: 130,
                   fit: BoxFit.cover,
                   alignment: Alignment.bottomCenter,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -632,7 +637,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             Text(
                               'CIDAN',
                               style: TextStyle(
-                                fontFamily: 'Poppins',
+                                fontFamily: 'packages/cidan/Poppins',
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF0F172A),
@@ -642,7 +647,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             Text(
                               'Regulatory Compliance AI',
                               style: TextStyle(
-                                fontFamily: 'Poppins',
+                                fontFamily: 'packages/cidan/Poppins',
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF64748B),
@@ -669,9 +674,12 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           ),
                           child: Image.asset(
                             AppAssets.uploadBanner,
+                            package: 'cidan',
                             width: double.infinity,
                             fit: BoxFit.contain,
                             alignment: Alignment.topCenter,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
                           ),
                         )
                       : SizedBox(
@@ -680,9 +688,12 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           height: (size.height * 0.22).clamp(130.0, 180.0),
                           child: Image.asset(
                             AppAssets.verifiedChecklist,
+                            package: 'cidan',
                             width: double.infinity,
                             fit: BoxFit.contain,
                             alignment: Alignment.topCenter,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
                           ),
                         ),
                 ),
@@ -811,7 +822,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           _videoStatusSteps[_videoStepIndex],
                           key: ValueKey<int>(_videoStepIndex),
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: 15.5,
                             fontWeight: FontWeight.w600,
                             color: textColor,
@@ -964,7 +975,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         ? 'Select another document'
                         : 'Drag & Drop your file here',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'packages/cidan/Poppins',
                       fontSize: dragTitleFontSize,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF0F172A),
@@ -987,7 +998,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         child: Text(
                           'or',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: isCompact ? 12 : 13,
                             color: const Color(0xFF94A3B8),
                           ),
@@ -1028,7 +1039,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     label: Text(
                       _hasSelectedFile ? 'Browse File' : 'Choose File',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: _hasSelectedFile ? 12.5 : 13.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1045,7 +1056,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         Text(
           'Supported formats: PDF, DOCX, DOC (Max 50 MB)',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'packages/cidan/Poppins',
             fontSize: isCompact ? 11 : 12,
             color: const Color(0xFF64748B),
           ),
@@ -1104,7 +1115,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     child: Text(
                       username.isNotEmpty ? username[0].toUpperCase() : 'U',
                       style: const TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         color: Colors.white,
@@ -1133,7 +1144,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           Text(
                             greeting,
                             style: const TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF64748B),
@@ -1144,7 +1155,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         username,
                         style: const TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -1195,7 +1206,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     Text(
                       'Sign Out',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFFEF4444),
@@ -1239,7 +1250,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 const Text(
                   'Recent Regulatory History',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -1259,7 +1270,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     child: Text(
                       '${_recentReports.length}',
                       style: const TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF4338CA),
@@ -1304,7 +1315,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   child: Text(
                     'No regulatory circulars processed yet. Select a document above to run AI compliance analysis.',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'packages/cidan/Poppins',
                       fontSize: 11.5,
                       color: Color(0xFF64748B),
                     ),
@@ -1414,7 +1425,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         filename,
                         style: const TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -1428,7 +1439,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           Text(
                             timeLabel,
                             style: const TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 10.5,
                               color: Color(0xFF94A3B8),
                             ),
@@ -1446,7 +1457,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           Text(
                             '$obligationsCount rules • $violationsCount gaps',
                             style: const TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 10.5,
                               color: Color(0xFF64748B),
                             ),
@@ -1492,7 +1503,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         isDeployed ? 'Deployed' : 'Pending',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: isDeployed
@@ -1552,7 +1563,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             Text(
               'Upload & Process',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -1578,7 +1589,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         Text(
           'Document Processed Successfully',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'packages/cidan/Poppins',
             fontSize: isCompact ? 18 : 21,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF0F172A),
@@ -1591,7 +1602,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         Text(
           'The contents have been analyzed and compliance insights are ready.',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'packages/cidan/Poppins',
             fontSize: isCompact ? 12 : 13.5,
             color: const Color(0xFF64748B),
             height: 1.35,
@@ -1641,7 +1652,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       Text(
                         'View Results',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 14.5,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -1685,7 +1696,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   child: Text(
                     'Upload Another',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'packages/cidan/Poppins',
                       fontSize: isCompact ? 12 : 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1722,7 +1733,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 Text(
                   _fileName,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -1733,7 +1744,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 Text(
                   _fileSize,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF64748B),
@@ -1922,7 +1933,7 @@ class _PdfPagePainter extends CustomPainter {
     const textSpan = TextSpan(
       text: 'PDF',
       style: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'packages/cidan/Poppins',
         fontSize: 8.5,
         fontWeight: FontWeight.w800,
         color: Colors.white,

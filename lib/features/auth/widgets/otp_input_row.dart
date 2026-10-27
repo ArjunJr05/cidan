@@ -153,7 +153,7 @@ class OtpInputRowState extends State<OtpInputRow> {
           textAlignVertical: TextAlignVertical.center,
           maxLength: 1,
           style: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'packages/cidan/Poppins',
             fontSize: 22,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,

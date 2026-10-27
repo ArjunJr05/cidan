@@ -79,7 +79,7 @@ class _CustomButtonState extends State<CustomButton> {
                       Text(
                         widget.label,
                         style: const TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,

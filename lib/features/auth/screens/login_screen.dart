@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const Text(
               'CIDAN Support',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Need assistance with your banking regulatory compliance login?',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 13.5,
                 color: AppColors.textPrimary,
                 height: 1.4,
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
               '• OTP verification codes are valid for 5 minutes.\n'
               '• For IT desk support, contact support@cidan.ai.',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 12.5,
                 color: AppColors.textSecondary,
                 height: 1.4,
@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text(
               'Got it',
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
@@ -198,9 +198,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: heroHeight,
                   child: Image.asset(
                     AppAssets.loginIllustration,
+                    package: 'cidan',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
                   ),
                 ),
 
@@ -269,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Text(
                                         AppStrings.loginTitle,
                                         style: TextStyle(
-                                          fontFamily: 'Poppins',
+                                          fontFamily: 'packages/cidan/Poppins',
                                           fontSize: isKeyboardOpen
                                               ? 18.0
                                               : titleFontSize,
@@ -282,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Text(
                                         AppStrings.loginSubtitle,
                                         style: TextStyle(
-                                          fontFamily: 'Poppins',
+                                          fontFamily: 'packages/cidan/Poppins',
                                           color: const Color(0xFF64748B),
                                           fontSize: isKeyboardOpen
                                               ? 12.0
@@ -364,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 onFieldSubmitted: (_) =>
                                                     _handleSendOtp(),
                                                 style: TextStyle(
-                                                  fontFamily: 'Poppins',
+                                                  fontFamily: 'packages/cidan/Poppins',
                                                   fontSize: isCompact ? 14 : 15,
                                                   fontWeight: FontWeight.w500,
                                                   color: const Color(
@@ -387,7 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                       ),
                                                   hintText: 'name@yourbank.com',
                                                   hintStyle: TextStyle(
-                                                    fontFamily: 'Poppins',
+                                                    fontFamily: 'packages/cidan/Poppins',
                                                     color: const Color(
                                                       0xFF94A3B8,
                                                     ),
@@ -441,7 +444,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           child: Text(
                                             _emailError!,
                                             style: const TextStyle(
-                                              fontFamily: 'Poppins',
+                                              fontFamily: 'packages/cidan/Poppins',
                                               color: AppColors.error,
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.w500,
@@ -478,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         child: Text(
                                           AppStrings.encryptionNote,
                                           style: TextStyle(
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'packages/cidan/Poppins',
                                             color: Color(0xFF64748B),
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w400,
@@ -537,7 +540,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Text(
                                     AppStrings.help,
                                     style: TextStyle(
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'packages/cidan/Poppins',
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF0F172A),

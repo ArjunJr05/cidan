@@ -78,7 +78,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     ? 'A new OTP has been sent to ${widget.email}.'
                     : 'A new 6-digit OTP code has been generated.',
                 style: const TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'packages/cidan/Poppins',
                   color: Colors.white,
                   fontSize: 13,
                 ),
@@ -183,9 +183,12 @@ class _OtpScreenState extends State<OtpScreen> {
                   height: heroHeight,
                   child: Image.asset(
                     AppAssets.otpIllustration,
+                    package: 'cidan',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     alignment: const Alignment(0, -0.4),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
                   ),
                 ),
 
@@ -251,7 +254,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     Text(
                                       AppStrings.verifyEmailSubtitle,
                                       style: TextStyle(
-                                        fontFamily: 'Poppins',
+                                        fontFamily: 'packages/cidan/Poppins',
                                         color: const Color(0xFF64748B),
                                         fontSize: isCompact ? 12.0 : 13.0,
                                       ),
@@ -261,7 +264,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     Text(
                                       widget.email,
                                       style: TextStyle(
-                                        fontFamily: 'Poppins',
+                                        fontFamily: 'packages/cidan/Poppins',
                                         fontSize: isCompact ? 14 : 15,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF0F172A),
@@ -298,7 +301,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                       Text(
                                         _errorMessage!,
                                         style: const TextStyle(
-                                          fontFamily: 'Poppins',
+                                          fontFamily: 'packages/cidan/Poppins',
                                           color: AppColors.error,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
@@ -317,7 +320,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                       ? RichText(
                                           text: TextSpan(
                                             style: TextStyle(
-                                              fontFamily: 'Poppins',
+                                              fontFamily: 'packages/cidan/Poppins',
                                               color: const Color(0xFF64748B),
                                               fontSize: isCompact ? 12 : 13,
                                             ),
@@ -329,7 +332,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                               TextSpan(
                                                 text: timerText,
                                                 style: const TextStyle(
-                                                  fontFamily: 'Poppins',
+                                                  fontFamily: 'packages/cidan/Poppins',
                                                   color: Color(0xFF4F46E5),
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -347,7 +350,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                           label: const Text(
                                             AppStrings.resendOtpNow,
                                             style: TextStyle(
-                                              fontFamily: 'Poppins',
+                                              fontFamily: 'packages/cidan/Poppins',
                                               color: Color(0xFF4F46E5),
                                               fontWeight: FontWeight.w600,
                                               fontSize: 13,

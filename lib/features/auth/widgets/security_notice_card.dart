@@ -45,7 +45,7 @@ class SecurityNoticeCard extends StatelessWidget {
                 Text(
                   AppStrings.expiryTitle,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: isCompact ? 12 : 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -55,7 +55,7 @@ class SecurityNoticeCard extends StatelessWidget {
                 Text(
                   AppStrings.expirySubtitle,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: isCompact ? 11 : 12,
                     color: AppColors.textSecondary,
                     height: 1.25,

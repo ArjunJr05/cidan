@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4
+
+- Added `package: 'cidan'` and fallback `errorBuilder` to all `Image.asset` calls to ensure self-contained asset resolution in consumer projects.
+- Added `package: 'cidan'` to `VideoPlayerController.asset` video loading.
+- Updated font family references to `packages/cidan/Poppins` for seamless Poppins font loading without host app asset configuration.
+
 ## 1.0.3
 
 - Resolved `PlatformFile.size` static analysis error for full compatibility with `file_picker` 12.x/13.x and 11.x.

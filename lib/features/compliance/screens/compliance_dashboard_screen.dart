@@ -92,7 +92,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
               child: Text(
                 'Workflow sanctioned & approved for production deployment!',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'packages/cidan/Poppins',
                   fontSize: 13,
                   color: Colors.white,
                 ),
@@ -209,7 +209,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   'Compliance Analysis',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
@@ -220,7 +220,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   'Audit & Verification Dashboard',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF64748B),
@@ -278,7 +278,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Policy Evolution & Gap Comparison',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -287,7 +287,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Compare existing handbook rules with new circular requirements.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 12,
                         color: Color(0xFF64748B),
                       ),
@@ -333,7 +333,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'OLD RULE (Existing Handbook)',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFFD97706),
@@ -352,7 +352,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                         child: const Text(
                           'Coverage Gap',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFFB45309),
@@ -363,7 +363,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'Standard Personal Credit Policy (Handbook Ch. 4)',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -373,7 +373,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'Existing rule relies on baseline credit appraisal and does NOT contain mandatory control checkpoints for illustrative circular compliance.',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 12,
                           color: Color(0xFF475569),
                           height: 1.35,
@@ -450,7 +450,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'NEW RULE ADDED (From Circular)',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF4F46E5),
@@ -469,7 +469,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                         child: const Text(
                           'OBL-001',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF4F46E5),
@@ -480,7 +480,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'Illustrative Control Framework Implementation',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -490,7 +490,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                       const Text(
                         'Apply the illustrative control framework to all described personal-loan and consumer-credit applications prior to sanction. Requires human confirmation of illustrative language.',
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'packages/cidan/Poppins',
                           fontSize: 12,
                           color: Color(0xFF475569),
                           height: 1.35,
@@ -550,7 +550,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Test Cases Performed to Verify',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -559,7 +559,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Validate rule changes and compliance impact.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 12,
                         color: Color(0xFF64748B),
                       ),
@@ -579,7 +579,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 child: const Text(
                   '4 Tests',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF64748B),
@@ -668,7 +668,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -678,7 +678,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   description,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 11.5,
                     color: Color(0xFF64748B),
                     height: 1.3,
@@ -699,7 +699,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
             child: Text(
               statusText,
               style: TextStyle(
-                fontFamily: 'Poppins',
+                fontFamily: 'packages/cidan/Poppins',
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: isPass
@@ -764,7 +764,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Problems & Risks Identified',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -773,7 +773,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                     Text(
                       'Key issues requiring attention before deployment.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 12,
                         color: Color(0xFF64748B),
                       ),
@@ -793,7 +793,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 child: const Text(
                   '3 Issues',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF4F46E5),
@@ -897,7 +897,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                   child: Text(
                     tag,
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'packages/cidan/Poppins',
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
                       color: tagColor,
@@ -909,7 +909,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -919,7 +919,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 Text(
                   description,
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 11.5,
                     color: Color(0xFF64748B),
                     height: 1.3,
@@ -975,7 +975,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 label: const Text(
                   'PDF Report',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF5B4BDB),
@@ -1016,7 +1016,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 label: Text(
                   _isApproved ? 'Deployed' : 'Deploy',
                   style: const TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontSize: 14.5,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -1197,7 +1197,7 @@ class _CompliancePdfDocumentModalState
                 child: Text(
                   'Saved to Local Storage',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'packages/cidan/Poppins',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
@@ -1212,7 +1212,7 @@ class _CompliancePdfDocumentModalState
               const Text(
                 'The regulatory compliance report has been downloaded and stored in your device local storage:',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'packages/cidan/Poppins',
                   fontSize: 12.5,
                   color: Color(0xFF475569),
                 ),
@@ -1254,7 +1254,7 @@ class _CompliancePdfDocumentModalState
               Text(
                 'Size: ${(content.length / 1024).toStringAsFixed(1)} KB • Status: ${widget.isApproved ? "Approved & Deployed" : "Review Pending"}',
                 style: const TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'packages/cidan/Poppins',
                   fontSize: 11,
                   color: Color(0xFF64748B),
                 ),
@@ -1274,7 +1274,7 @@ class _CompliancePdfDocumentModalState
               child: const Text(
                 'Done',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'packages/cidan/Poppins',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1328,7 +1328,7 @@ class _CompliancePdfDocumentModalState
                         child: Text(
                           'PDF Reference Document',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: 14.5,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -1356,7 +1356,7 @@ class _CompliancePdfDocumentModalState
                   label: const Text(
                     'Download',
                     style: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'packages/cidan/Poppins',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1418,7 +1418,7 @@ class _CompliancePdfDocumentModalState
                               Text(
                                 'CIDAN REGULATORY COMPLIANCE AI',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF0F172A),
@@ -1429,7 +1429,7 @@ class _CompliancePdfDocumentModalState
                               Text(
                                 'Automated Regulatory Ingestion & Validation Report',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   color: Color(0xFF64748B),
                                 ),
@@ -1457,7 +1457,7 @@ class _CompliancePdfDocumentModalState
                           child: Text(
                             isApproved ? 'AUDIT APPROVED' : 'REVIEW PENDING',
                             style: TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
                               color: isApproved
@@ -1504,7 +1504,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '1. EXECUTIVE METRICS SUMMARY',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -1525,7 +1525,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Metric',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1536,7 +1536,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Count',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1547,7 +1547,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Audit Status',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1579,7 +1579,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '2. RULE EVOLUTION (OLD RULE VS NEW RULE ADDED)',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -1598,7 +1598,7 @@ class _CompliancePdfDocumentModalState
                           Text(
                             '• Existing Rule: Standard Personal Credit Underwriting (Handbook Ch 4). Lacks mandatory checkpoints for illustrative circular requirements.',
                             style: TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 10,
                               color: Color(0xFF334155),
                             ),
@@ -1607,7 +1607,7 @@ class _CompliancePdfDocumentModalState
                           Text(
                             '• New Rule Added: OBL-001 — Apply illustrative control framework across personal loan and consumer credit applications before sanction.',
                             style: TextStyle(
-                              fontFamily: 'Poppins',
+                              fontFamily: 'packages/cidan/Poppins',
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF047857),
@@ -1623,7 +1623,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '3. TESTCASES PERFORMED TO VERIFY',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -1644,7 +1644,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'ID',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1655,7 +1655,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Test Scenario',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1666,7 +1666,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Result',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1681,7 +1681,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'TC-001',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1691,7 +1691,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Loan scope boundary validation',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1701,7 +1701,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'PASS',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   color: Colors.green,
                                 ),
@@ -1716,7 +1716,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'TC-002',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1726,7 +1726,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Illustrative framework execution',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1736,7 +1736,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'PASS',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   color: Colors.green,
                                 ),
@@ -1751,7 +1751,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'TC-003',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1761,7 +1761,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Handbook policy cross-mapping',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1771,7 +1771,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'FLAGGED',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   color: Colors.orange,
                                 ),
@@ -1786,7 +1786,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'TC-004',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1796,7 +1796,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'Audit trail report generation',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                 ),
                               ),
@@ -1806,7 +1806,7 @@ class _CompliancePdfDocumentModalState
                               child: Text(
                                 'PASS',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 9.5,
                                   color: Colors.green,
                                 ),
@@ -1823,7 +1823,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '4. PROBLEMS & ACTIONABLE RISKS',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -1833,7 +1833,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '• Ambiguity: Illustrative source language requires human confirmation.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 9.5,
                         color: Color(0xFFB45309),
                       ),
@@ -1841,7 +1841,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '• Policy Gap: Coverage cannot be determined from retrieved handbook passages.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 9.5,
                         color: Color(0xFFDC2626),
                       ),
@@ -1849,7 +1849,7 @@ class _CompliancePdfDocumentModalState
                     const Text(
                       '• Legal Caveat: Synthetic demo output only; not an official RBI circular or legal advice.',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
+                        fontFamily: 'packages/cidan/Poppins',
                         fontSize: 9.5,
                         color: Color(0xFF64748B),
                       ),
@@ -1875,7 +1875,7 @@ class _CompliancePdfDocumentModalState
                                 const Text(
                                   'Reviewed & Verified By:',
                                   style: TextStyle(
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'packages/cidan/Poppins',
                                     fontSize: 9.5,
                                     color: Color(0xFF64748B),
                                   ),
@@ -1886,7 +1886,7 @@ class _CompliancePdfDocumentModalState
                                       ? 'Chief Compliance Officer (Signed)'
                                       : 'Awaiting Compliance Officer Signature',
                                   style: TextStyle(
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'packages/cidan/Poppins',
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: isApproved
@@ -1935,7 +1935,7 @@ class _CompliancePdfDocumentModalState
                         label: const Text(
                           'Download Report to Local Storage',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'packages/cidan/Poppins',
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1968,7 +1968,7 @@ class _CompliancePdfDocumentModalState
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'packages/cidan/Poppins',
               fontSize: 9.5,
               fontWeight: FontWeight.w600,
               color: Color(0xFF64748B),
@@ -1980,7 +1980,7 @@ class _CompliancePdfDocumentModalState
           child: Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'packages/cidan/Poppins',
               fontSize: 9.5,
               color: Color(0xFF0F172A),
             ),
@@ -1998,7 +1998,7 @@ class _CompliancePdfDocumentModalState
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'packages/cidan/Poppins',
               fontSize: 9.5,
               color: Color(0xFF1E293B),
             ),
@@ -2009,7 +2009,7 @@ class _CompliancePdfDocumentModalState
           child: Text(
             count,
             style: const TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'packages/cidan/Poppins',
               fontSize: 9.5,
               fontWeight: FontWeight.w700,
               color: Color(0xFF0F172A),
@@ -2021,7 +2021,7 @@ class _CompliancePdfDocumentModalState
           child: Text(
             status,
             style: const TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'packages/cidan/Poppins',
               fontSize: 9.5,
               color: Color(0xFF475569),
             ),
