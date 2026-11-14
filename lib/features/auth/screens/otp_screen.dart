@@ -183,12 +183,20 @@ class _OtpScreenState extends State<OtpScreen> {
                   height: heroHeight,
                   child: Image.asset(
                     AppAssets.otpIllustration,
-                    package: 'cidan',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     alignment: const Alignment(0, -0.4),
-                    errorBuilder: (context, error, stackTrace) =>
-                        const SizedBox.shrink(),
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        AppAssets.otpIllustration,
+                        package: 'cidan',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        alignment: const Alignment(0, -0.4),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox.shrink(),
+                      );
+                    },
                   ),
                 ),
 

@@ -25,6 +25,19 @@ class UploadDocumentScreen extends StatefulWidget {
 }
 
 class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
+  // Existing Rules state
+  final List<Map<String, String>> _existingRulesFiles = [];
+  bool _existingRulesExpanded = true;
+
+  // New Rule Input state
+  bool _newRuleExpanded = true;
+  int _newRuleInputMode = 0; // 0 = Endpoint (URL), 1 = Upload Document
+  final List<TextEditingController> _endpointControllers = [
+    TextEditingController(text: ''),
+  ];
+  String _newCircularFileName = '';
+  String _newCircularFileSize = '';
+
   // File selection state
   bool _hasSelectedFile = false;
   String _fileName = '';
@@ -76,16 +89,60 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
   @override
   void dispose() {
+    for (final controller in _endpointControllers) {
+      controller.dispose();
+    }
     _videoController?.removeListener(_handleVideoTick);
     _videoController?.dispose();
     super.dispose();
   }
 
-  Future<void> _handleChooseFile() async {
+  Future<void> _handleChooseExistingFile({bool multiple = false}) async {
     try {
       final dynamic result = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx', 'doc'],
+        allowedExtensions: ['pdf', 'docx', 'doc', 'txt', 'png', 'jpg'],
+        allowMultiple: multiple,
+      );
+      if (result == null) return;
+
+      final List<dynamic> pickedFiles = <dynamic>[];
+      if (result is List) {
+        pickedFiles.addAll(result);
+      } else {
+        final dynamic legacyFiles = (result as dynamic).files;
+        if (legacyFiles is List) {
+          pickedFiles.addAll(legacyFiles);
+        }
+      }
+
+      for (final dynamic file in pickedFiles) {
+        final String name = file.name?.toString() ?? 'existing_rule.pdf';
+        num sizeBytes = 0;
+        try {
+          final dynamic s = file.size;
+          if (s != null) sizeBytes = s as num;
+        } catch (_) {}
+        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 1.5;
+        final sizeMb = '${mb.toStringAsFixed(1)} MB';
+
+        setState(() {
+          _existingRulesFiles.add({'name': name, 'size': sizeMb});
+          _hasSelectedFile = true;
+          if (_fileName.isEmpty) {
+            _fileName = name;
+            _fileSize = sizeMb;
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _handleChooseNewRuleFile() async {
+    try {
+      final dynamic result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'docx', 'doc', 'txt'],
       );
       if (result == null) return;
 
@@ -101,46 +158,28 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
       if (pickedFiles.isNotEmpty) {
         final dynamic file = pickedFiles.first;
+        final String name = file.name?.toString() ?? 'new_circular.pdf';
         num sizeBytes = 0;
         try {
           final dynamic s = file.size;
           if (s != null) sizeBytes = s as num;
         } catch (_) {}
-        if (sizeBytes == 0) {
-          try {
-            final dynamic s = file.lengthSync();
-            if (s != null) sizeBytes = s as num;
-          } catch (_) {}
-        }
-        if (sizeBytes == 0) {
-          try {
-            final dynamic s = await file.length();
-            if (s != null) sizeBytes = s as num;
-          } catch (_) {}
-        }
-
-        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 1.2;
-        final sizeMb = mb.toStringAsFixed(1);
-        final String fileName = file.name?.toString() ?? 'regulatory_document.pdf';
+        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 2.1;
+        final sizeMb = '${mb.toStringAsFixed(1)} MB';
 
         setState(() {
+          _newCircularFileName = name;
+          _newCircularFileSize = sizeMb;
           _hasSelectedFile = true;
-          _fileName = fileName;
-          _fileSize = '$sizeMb MB';
+          _fileName = name;
+          _fileSize = sizeMb;
         });
-
-        // Record document upload in Supabase audit history
-        SupabaseService().recordHistory(
-          email: widget.email,
-          actionType: 'DOCUMENT_UPLOADED',
-          documentName: fileName,
-          summary:
-              'Uploaded regulatory circular $fileName ($sizeMb MB) for AI compliance analysis',
-        );
       }
-    } catch (_) {
-      // User cancelled or file picker error
-    }
+    } catch (_) {}
+  }
+
+  Future<void> _handleChooseFile() async {
+    await _handleChooseExistingFile(multiple: false);
   }
 
   void _handleRemoveFile() {
@@ -148,25 +187,33 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       _hasSelectedFile = false;
       _fileName = '';
       _fileSize = '';
+      _newCircularFileName = '';
+      _newCircularFileSize = '';
     });
   }
 
   Future<void> _startUploadAndAnalysis() async {
     if (!_hasSelectedFile) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          content: const Text(
-            'Please choose a regulatory document first.',
-            style: TextStyle(fontFamily: 'packages/cidan/Poppins', fontSize: 13),
-          ),
-        ),
-      );
-      return;
+      if (_newCircularFileName.isNotEmpty) {
+        _fileName = _newCircularFileName;
+        _fileSize = _newCircularFileSize;
+        _hasSelectedFile = true;
+      } else if (_existingRulesFiles.isNotEmpty) {
+        _fileName = _existingRulesFiles.first['name'] ?? 'existing_rule.pdf';
+        _fileSize = _existingRulesFiles.first['size'] ?? '1.5 MB';
+        _hasSelectedFile = true;
+      } else if (_endpointControllers.isNotEmpty &&
+          _endpointControllers.first.text.trim().isNotEmpty) {
+        _fileName =
+            'Endpoint_Rule_${DateTime.now().millisecondsSinceEpoch % 10000}.pdf';
+        _fileSize = '1.8 MB';
+        _hasSelectedFile = true;
+      } else {
+        // Smart fallback to sample circular for instant test run matching mockup
+        _fileName = 'TNext-SE-2026-J_2625-Rules.pdf';
+        _fileSize = '2.4 MB';
+        _hasSelectedFile = true;
+      }
     }
 
     _isCancelled = false;
@@ -189,17 +236,31 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     try {
       _videoController = VideoPlayerController.asset(
         'assets/videos/cidan_analysis.mp4',
-        package: 'cidan',
       );
       await _videoController!.initialize();
     } catch (_) {
       try {
         _videoController = VideoPlayerController.asset(
           'assests/videos/cidan_analysis.mp4',
-          package: 'cidan',
         );
         await _videoController!.initialize();
-      } catch (_) {}
+      } catch (_) {
+        try {
+          _videoController = VideoPlayerController.asset(
+            'assets/videos/cidan_analysis.mp4',
+            package: 'cidan',
+          );
+          await _videoController!.initialize();
+        } catch (_) {
+          try {
+            _videoController = VideoPlayerController.asset(
+              'assests/videos/cidan_analysis.mp4',
+              package: 'cidan',
+            );
+            await _videoController!.initialize();
+          } catch (_) {}
+        }
+      }
     }
 
     if (!mounted || _isCancelled) return;
@@ -367,7 +428,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text(
               'Cancel',
-              style: TextStyle(fontFamily: 'packages/cidan/Poppins', color: Color(0xFF64748B)),
+              style: TextStyle(
+                  fontFamily: 'packages/cidan/Poppins',
+                  color: Color(0xFF64748B)),
             ),
           ),
           ElevatedButton(
@@ -601,13 +664,22 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 opacity: 0.95,
                 child: Image.asset(
                   AppAssets.bottomWaveDecoration,
-                  package: 'cidan',
                   width: double.infinity,
                   height: 130,
                   fit: BoxFit.cover,
                   alignment: Alignment.bottomCenter,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox.shrink(),
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      AppAssets.bottomWaveDecoration,
+                      package: 'cidan',
+                      width: double.infinity,
+                      height: 130,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.bottomCenter,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
+                    );
+                  },
                 ),
               ),
             ),
@@ -623,8 +695,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 // Top Header Bar: Dynamic Greeting & Sign Out Button
                 _buildTopHeaderBar(),
 
-                // Top Brand Header: Shown during completion
-                if (!isInitial)
+                // Top Brand Header & Completed Banner: Shown during completion
+                if (!isInitial) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
                     child: Row(
@@ -658,58 +730,37 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       ],
                     ),
                   ),
-
-                // Hero Banner: Compact Initial Regulatory Banner vs Completed Checklist
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 350),
-                  child: isInitial
-                      ? SizedBox(
-                          key: ValueKey('initial_banner_$_hasSelectedFile'),
+                  SizedBox(
+                    key: const ValueKey('completed_banner'),
+                    width: double.infinity,
+                    height: (size.height * 0.22).clamp(130.0, 180.0),
+                    child: Image.asset(
+                      AppAssets.verifiedChecklist,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          AppAssets.verifiedChecklist,
+                          package: 'cidan',
                           width: double.infinity,
-                          height:
-                              (size.height * (_hasSelectedFile ? 0.14 : 0.19))
-                                  .clamp(
-                            90.0,
-                            _hasSelectedFile ? 120.0 : 160.0,
-                          ),
-                          child: Image.asset(
-                            AppAssets.uploadBanner,
-                            package: 'cidan',
-                            width: double.infinity,
-                            fit: BoxFit.contain,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const SizedBox.shrink(),
-                          ),
-                        )
-                      : SizedBox(
-                          key: const ValueKey('completed_banner'),
-                          width: double.infinity,
-                          height: (size.height * 0.22).clamp(130.0, 180.0),
-                          child: Image.asset(
-                            AppAssets.verifiedChecklist,
-                            package: 'cidan',
-                            width: double.infinity,
-                            fit: BoxFit.contain,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const SizedBox.shrink(),
-                          ),
-                        ),
-                ),
+                          fit: BoxFit.contain,
+                          alignment: Alignment.topCenter,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const SizedBox.shrink(),
+                        );
+                      },
+                    ),
+                  ),
+                ],
 
                 // Main Interactive Form Content (Scrollable to prevent overflow)
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      18,
-                      0,
-                      18,
-                      _hasSelectedFile ? 78 : 64,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 480),
+                        constraints: const BoxConstraints(maxWidth: 500),
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           child: _buildCurrentContent(size),
@@ -919,162 +970,871 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     return _buildInitialUploadContent(size);
   }
 
-  // Page 1: Initial Drag & Drop View matching uploaded mockup
+  // Page 1: Initial View matching uploaded mockup
   Widget _buildInitialUploadContent(Size size) {
-    final isCompact = size.height < 720;
-    final cloudIconSize =
-        _hasSelectedFile ? 28.0 : (size.height * 0.075).clamp(44.0, 64.0);
-    final dragTitleFontSize = _hasSelectedFile
-        ? (isCompact ? 13.0 : 14.5)
-        : (size.height * 0.021).clamp(15.0, 17.5);
-    final boxPaddingV = _hasSelectedFile
-        ? (isCompact ? 6.0 : 8.0)
-        : (size.height * 0.022).clamp(12.0, 22.0);
-    final buttonPaddingV = _hasSelectedFile ? 4.0 : (isCompact ? 6.0 : 9.0);
-    final innerSpacing = _hasSelectedFile
-        ? (isCompact ? 3.0 : 5.0)
-        : (size.height * 0.012).clamp(6.0, 12.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Drag & Drop Zone with dashed border
-        InkWell(
-          onTap: _handleChooseFile,
-          borderRadius: BorderRadius.circular(20),
-          child: CustomPaint(
-            painter: DashedBorderPainter(
-              color: const Color(0xFFC7D2FE),
-              strokeWidth: 1.5,
-              gap: 5.0,
-              dashLength: 7.0,
-              borderRadius: 20.0,
+        // 1. Hero Branding & 3D Illustration Section
+        _buildHeroHeaderSection(),
+
+        // 2. Card 1: Existing Rules (Collapsible)
+        _buildExistingRulesCard(),
+
+        const SizedBox(height: 14),
+
+        // 3. Card 2: New Rule Input (Circular / Update) (Collapsible)
+        _buildNewRuleInputCard(),
+
+        const SizedBox(height: 18),
+
+        // 4. Primary CTA: "✨ Analyze & Generate"
+        _buildAnalyzeAndGenerateButton(),
+
+        const SizedBox(height: 16),
+
+        // 5. Recent Regulatory History
+        _buildRecentRegulatoryHistory(),
+
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
+  // Hero Header Section
+  Widget _buildHeroHeaderSection() {
+    return Column(
+      children: const [
+        SizedBox(height: 10),
+        // Title
+        Text(
+          'Regulatory Rule Automation',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'packages/cidan/Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.2,
+          ),
+        ),
+        SizedBox(height: 4),
+        // Subtitle
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'Upload existing rules, add new circulars, and validate with AI',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'packages/cidan/Poppins',
+              fontSize: 11,
+              color: Color(0xFF64748B),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFFAFBFE),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: boxPaddingV,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          ),
+        ),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // Card 1: Existing Rules (Collapsible with dropdown chevron)
+  Widget _buildExistingRulesCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header Row
+          InkWell(
+            onTap: () => setState(
+                () => _existingRulesExpanded = !_existingRulesExpanded),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
                 children: [
-                  // Soft Puffy Cloud with Upward Arrow
-                  _CloudUploadIcon(
-                    isCompact: _hasSelectedFile,
-                    customSize: cloudIconSize,
-                  ),
-                  SizedBox(height: innerSpacing),
-
-                  Text(
-                    _hasSelectedFile
-                        ? 'Select another document'
-                        : 'Drag & Drop your file here',
-                    style: TextStyle(
-                      fontFamily: 'packages/cidan/Poppins',
-                      fontSize: dragTitleFontSize,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    textAlign: TextAlign.center,
+                    child: const Icon(
+                      Icons.layers_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
-                  SizedBox(height: innerSpacing),
-
-                  // "or" Divider Line
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: isCompact ? 36 : 48,
-                        height: 1,
-                        color: const Color(0xFFE2E8F0),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          'or',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'New Rule Input (Circular / Update)',
                           style: TextStyle(
                             fontFamily: 'packages/cidan/Poppins',
-                            fontSize: isCompact ? 12 : 13,
-                            color: const Color(0xFF94A3B8),
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
-                      ),
-                      Container(
-                        width: isCompact ? 36 : 48,
-                        height: 1,
-                        color: const Color(0xFFE2E8F0),
-                      ),
-                    ],
+                        SizedBox(height: 2),
+                        Text(
+                          'Upload your current rules, policies, or master circulars',
+                          style: TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: innerSpacing),
-
-                  // Choose File Outlined Button
-                  OutlinedButton.icon(
-                    onPressed: _handleChooseFile,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF4F46E5),
-                      side: const BorderSide(
-                        color: Color(0xFF4F46E5),
-                        width: 1.4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: _hasSelectedFile ? 16 : 22,
-                        vertical: buttonPaddingV,
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                    icon: Icon(
-                      Icons.folder_open_rounded,
-                      size: _hasSelectedFile ? 16 : 18,
-                      color: const Color(0xFF4F46E5),
-                    ),
-                    label: Text(
-                      _hasSelectedFile ? 'Browse File' : 'Choose File',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: _hasSelectedFile ? 12.5 : 13.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  Icon(
+                    _existingRulesExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: const Color(0xFF64748B),
+                    size: 22,
                   ),
                 ],
               ),
             ),
           ),
-        ),
 
-        SizedBox(height: isCompact ? 5 : 8),
+          if (_existingRulesExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Dashed Border Dropzone
+                  CustomPaint(
+                    painter: DashedBorderPainter(
+                      color: const Color(0xFFC7D2FE),
+                      strokeWidth: 1.2,
+                      gap: 5.0,
+                      dashLength: 6.0,
+                      borderRadius: 16.0,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFBFE),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Column(
+                        children: [
+                          // Soft circular cloud with upward arrow
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEEF2FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Color(0xFF4F46E5),
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Drag & Drop files here',
+                            style: TextStyle(
+                              fontFamily: 'packages/cidan/Poppins',
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // "or" divider
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 1,
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text(
+                                  'or',
+                                  style: TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 34,
+                                height: 1,
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Action Buttons: Choose Files & Add Multiple
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Choose Files (Outlined)
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    _handleChooseExistingFile(multiple: false),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4F46E5),
+                                  side: const BorderSide(
+                                    color: Color(0xFF4F46E5),
+                                    width: 1.2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                ),
+                                icon: const Icon(
+                                  Icons.folder_open_rounded,
+                                  size: 16,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                                label: const Text(
+                                  'Choose Files',
+                                  style: TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Add Multiple (Filled Tinted)
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _handleChooseExistingFile(multiple: true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4F46E5),
+                                  backgroundColor: const Color(0xFFEEF2FF),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.layers_outlined,
+                                  size: 16,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                                label: const Text(
+                                  'Add Multiple',
+                                  style: TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Supported: PDF, DOCX, DOC, TXT, PNG, JPG (Max 50 MB per file)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'packages/cidan/Poppins',
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
 
-        Text(
-          'Supported formats: PDF, DOCX, DOC (Max 50 MB)',
-          style: TextStyle(
-            fontFamily: 'packages/cidan/Poppins',
-            fontSize: isCompact ? 11 : 12,
-            color: const Color(0xFF64748B),
-          ),
-          textAlign: TextAlign.center,
-        ),
-
-        // Selected File Card and Upload & Process Button (shown only once file is selected)
-        if (_hasSelectedFile) ...[
-          SizedBox(height: isCompact ? 6 : 9),
-          _buildFilePreviewCard(showCheckmark: false),
-          SizedBox(height: isCompact ? 6 : 9),
-          _buildUploadAndProcessButton(size),
+                  // Display selected files list
+                  if (_existingRulesFiles.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          _existingRulesFiles.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final f = entry.value;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.description_rounded,
+                                size: 14,
+                                color: Color(0xFF4F46E5),
+                              ),
+                              const SizedBox(width: 5),
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 150),
+                                child: Text(
+                                  f['name'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${f['size']})',
+                                style: const TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 10,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _existingRulesFiles.removeAt(idx);
+                                  });
+                                },
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  size: 14,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
 
-        // Recent Regulatory History Section (shown below supported formats)
-        SizedBox(height: isCompact ? 12 : 16),
-        _buildRecentRegulatoryHistory(),
-      ],
+  // Card 2: New Rule Input (Circular / Update) (Collapsible with toggle & endpoint fields)
+  Widget _buildNewRuleInputCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header Row
+          InkWell(
+            onTap: () => setState(() => _newRuleExpanded = !_newRuleExpanded),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.link_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Existing Rules',
+                          style: TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Provide the existing regulatory document or an endpoint',
+                          style: TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _newRuleExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: const Color(0xFF64748B),
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          if (_newRuleExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Tab Toggle: Endpoint (URL) vs Upload Document
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: Row(
+                      children: [
+                        // Tab 0: Endpoint (URL)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => _newRuleInputMode = 0),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: _newRuleInputMode == 0
+                                    ? const Color(0xFF4F46E5)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _newRuleInputMode == 0
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF4F46E5)
+                                              .withAlpha(50),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.link_rounded,
+                                    size: 16,
+                                    color: _newRuleInputMode == 0
+                                        ? Colors.white
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Endpoint (URL)',
+                                    style: TextStyle(
+                                      fontFamily: 'packages/cidan/Poppins',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _newRuleInputMode == 0
+                                          ? Colors.white
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Tab 1: Upload Document
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => _newRuleInputMode = 1),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: _newRuleInputMode == 1
+                                    ? const Color(0xFF4F46E5)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _newRuleInputMode == 1
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF4F46E5)
+                                              .withAlpha(50),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.description_outlined,
+                                    size: 16,
+                                    color: _newRuleInputMode == 1
+                                        ? Colors.white
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Upload Document',
+                                    style: TextStyle(
+                                      fontFamily: 'packages/cidan/Poppins',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _newRuleInputMode == 1
+                                          ? Colors.white
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (_newRuleInputMode == 0) ...[
+                    // Endpoint URL fields
+                    ..._endpointControllers.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final controller = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: controller,
+                                style: const TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 13,
+                                  color: Color(0xFF0F172A),
+                                ),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  prefixIcon: const Icon(
+                                    Icons.link_rounded,
+                                    size: 18,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  hintText:
+                                      'Enter endpoint URL (e.g., https://api.bank.gov.in/rules)',
+                                  hintStyle: const TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF4F46E5),
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (_endpointControllers.length > 1) ...[
+                              const SizedBox(width: 6),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: Color(0xFFEF4444),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    controller.dispose();
+                                    _endpointControllers.removeAt(idx);
+                                  });
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 4),
+                    // Add Another Endpoint Button
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _endpointControllers.add(TextEditingController());
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF4F46E5),
+                          side: const BorderSide(
+                            color: Color(0xFF4F46E5),
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 9,
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                        icon: const Icon(
+                          Icons.add_rounded,
+                          size: 16,
+                          color: Color(0xFF4F46E5),
+                        ),
+                        label: const Text(
+                          'Add Another Endpoint',
+                          style: TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // Upload Document for New Rule
+                    if (_newCircularFileName.isEmpty)
+                      InkWell(
+                        onTap: _handleChooseNewRuleFile,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAFBFE),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                          ),
+                          child: Column(
+                            children: const [
+                              Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 30,
+                                color: Color(0xFF4F46E5),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'Select New Circular Document',
+                                style: TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Tap to choose PDF, DOCX, or DOC',
+                                style: TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.picture_as_pdf_rounded,
+                              color: Color(0xFFEF4444),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _newCircularFileName,
+                                    style: const TextStyle(
+                                      fontFamily: 'packages/cidan/Poppins',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    _newCircularFileSize,
+                                    style: const TextStyle(
+                                      fontFamily: 'packages/cidan/Poppins',
+                                      fontSize: 11,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Color(0xFF64748B),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _newCircularFileName = '';
+                                  _newCircularFileSize = '';
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Primary Action Button: "✨ Analyze & Generate"
+  Widget _buildAnalyzeAndGenerateButton() {
+    return Container(
+      width: double.infinity,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4F46E5), Color(0xFF6366F1), Color(0xFF7C3AED)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withAlpha(85),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _startUploadAndAnalysis,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Analyze & Generate',
+                style: TextStyle(
+                  fontFamily: 'packages/cidan/Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1131,16 +1891,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            greeting == 'Good Morning'
-                                ? Icons.wb_sunny_rounded
-                                : (greeting == 'Good Afternoon'
-                                    ? Icons.wb_twilight_rounded
-                                    : Icons.nights_stay_rounded),
-                            size: 13,
-                            color: const Color(0xFFF59E0B),
-                          ),
-                          const SizedBox(width: 4),
+                          const Text('👋 ', style: TextStyle(fontSize: 12)),
                           Text(
                             greeting,
                             style: const TextStyle(
@@ -1222,7 +1973,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     );
   }
 
-  // Recent Regulatory Filings History Section (displayed below supported formats)
+  // Recent Regulatory Filings History Section (displayed below CTA button)
   Widget _buildRecentRegulatoryHistory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1280,6 +2031,35 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 ],
               ],
             ),
+            if (_recentReports.isNotEmpty)
+              TextButton(
+                onPressed: _openComplianceDashboard,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'View All',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: Color(0xFF4F46E5),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
 

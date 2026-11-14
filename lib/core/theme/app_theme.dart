@@ -4,7 +4,8 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static const String fontFamily = 'packages/cidan/Poppins';
+  static const String fontFamily = 'Poppins';
+  static const List<String> fontFamilyFallback = ['packages/cidan/Poppins'];
 
   static ThemeData get lightTheme {
     const baseTextTheme = Typography.blackMountainView;
@@ -13,6 +14,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: fontFamily,
+      fontFamilyFallback: fontFamilyFallback,
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primary,
       colorScheme: const ColorScheme.light(

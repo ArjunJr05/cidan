@@ -198,12 +198,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: heroHeight,
                   child: Image.asset(
                     AppAssets.loginIllustration,
-                    package: 'cidan',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const SizedBox.shrink(),
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        AppAssets.loginIllustration,
+                        package: 'cidan',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox.shrink(),
+                      );
+                    },
                   ),
                 ),
 
