@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5
+
+- Streamlined document uploading with a unified single "Choose File" button supporting multi-file selection.
+- Added multi-document upload support for Existing Rules with scrollable bounded container and individual file removal.
+- Expanded file limit to 10 files (PDFs, images, or combined) with live slot counter (`x/10`) and filename truncation.
+- Added concurrency guard (`_isPickingFile`) to prevent platform channel collisions and `already_active` exceptions.
+- Enhanced Android stability: disabled Impeller to resolve Qualcomm driver gralloc format 0x3b crashes, removed `android:taskAffinity`, and added storage/media permissions.
+
 ## 1.0.4
 
 - Added `package: 'cidan'` and fallback `errorBuilder` to all `Image.asset` calls to ensure self-contained asset resolution in consumer projects.

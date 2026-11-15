@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_assets.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/screens/login_screen.dart';
 import '../models/compliance_report_model.dart';
@@ -35,11 +34,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   final List<TextEditingController> _endpointControllers = [
     TextEditingController(text: ''),
   ];
+  final List<Map<String, String>> _newRuleFiles = [];
   String _newCircularFileName = '';
   String _newCircularFileSize = '';
 
   // File selection state
   bool _hasSelectedFile = false;
+  bool _isPickingFile = false;
   String _fileName = '';
   String _fileSize = '';
 
@@ -97,89 +98,186 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     super.dispose();
   }
 
-  Future<void> _handleChooseExistingFile({bool multiple = false}) async {
-    try {
-      final dynamic result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx', 'doc', 'txt', 'png', 'jpg'],
-        allowMultiple: multiple,
-      );
-      if (result == null) return;
+  static const int _maxAllowedFiles = 10;
 
-      final List<dynamic> pickedFiles = <dynamic>[];
-      if (result is List) {
-        pickedFiles.addAll(result);
-      } else {
-        final dynamic legacyFiles = (result as dynamic).files;
-        if (legacyFiles is List) {
-          pickedFiles.addAll(legacyFiles);
-        }
+  IconData _getFileIcon(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.pdf')) {
+      return Icons.picture_as_pdf_rounded;
+    } else if (lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg')) {
+      return Icons.image_rounded;
+    } else {
+      return Icons.description_rounded;
+    }
+  }
+
+  Color _getFileIconColor(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.pdf')) {
+      return const Color(0xFFEF4444);
+    } else if (lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg')) {
+      return const Color(0xFF10B981);
+    } else {
+      return const Color(0xFF4F46E5);
+    }
+  }
+
+  Future<void> _handleChooseExistingFile({bool multiple = true}) async {
+    if (_isPickingFile) return;
+    if (_existingRulesFiles.length >= _maxAllowedFiles) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Maximum 10 files allowed (PDF, images, or combined). Please remove some files to add more.',
+              style: TextStyle(fontFamily: 'packages/cidan/Poppins'),
+            ),
+            backgroundColor: Color(0xFFEF4444),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
+      return;
+    }
 
-      for (final dynamic file in pickedFiles) {
-        final String name = file.name?.toString() ?? 'existing_rule.pdf';
-        num sizeBytes = 0;
-        try {
-          final dynamic s = file.size;
-          if (s != null) sizeBytes = s as num;
-        } catch (_) {}
+    _isPickingFile = true;
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
+        allowMultiple: multiple,
+        withData: false,
+        withReadStream: false,
+      );
+      if (result == null || !mounted) return;
+
+      final remainingSlots = _maxAllowedFiles - _existingRulesFiles.length;
+      bool exceeded = false;
+
+      final List<Map<String, String>> newFiles = [];
+      for (final file in result.files) {
+        if (newFiles.length >= remainingSlots) {
+          exceeded = true;
+          break;
+        }
+        final String name =
+            file.name.isNotEmpty ? file.name : 'existing_rule.pdf';
+        final int sizeBytes = file.size > 0 ? file.size : 1024 * 500;
         final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 1.5;
         final sizeMb = '${mb.toStringAsFixed(1)} MB';
+        newFiles.add({'name': name, 'size': sizeMb});
+      }
 
+      if (newFiles.isNotEmpty && mounted) {
         setState(() {
-          _existingRulesFiles.add({'name': name, 'size': sizeMb});
+          _existingRulesFiles.addAll(newFiles);
           _hasSelectedFile = true;
           if (_fileName.isEmpty) {
-            _fileName = name;
-            _fileSize = sizeMb;
+            _fileName = newFiles.first['name'] ?? 'existing_rule.pdf';
+            _fileSize = newFiles.first['size'] ?? '1.5 MB';
           }
         });
       }
-    } catch (_) {}
+
+      if (exceeded && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Limit applied: maximum 10 files allowed. Extra files were not added.',
+              style: TextStyle(fontFamily: 'packages/cidan/Poppins'),
+            ),
+            backgroundColor: Color(0xFFF59E0B),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error choosing existing files: $e');
+    } finally {
+      _isPickingFile = false;
+    }
   }
 
-  Future<void> _handleChooseNewRuleFile() async {
-    try {
-      final dynamic result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx', 'doc', 'txt'],
-      );
-      if (result == null) return;
-
-      final List<dynamic> pickedFiles = <dynamic>[];
-      if (result is List) {
-        pickedFiles.addAll(result);
-      } else {
-        final dynamic legacyFiles = (result as dynamic).files;
-        if (legacyFiles is List) {
-          pickedFiles.addAll(legacyFiles);
-        }
+  Future<void> _handleChooseNewRuleFile({bool multiple = true}) async {
+    if (_isPickingFile) return;
+    if (_newRuleFiles.length >= _maxAllowedFiles) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Maximum 10 files allowed (PDF, images, or combined). Please remove some files to add more.',
+              style: TextStyle(fontFamily: 'packages/cidan/Poppins'),
+            ),
+            backgroundColor: Color(0xFFEF4444),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
+      return;
+    }
 
-      if (pickedFiles.isNotEmpty) {
-        final dynamic file = pickedFiles.first;
-        final String name = file.name?.toString() ?? 'new_circular.pdf';
-        num sizeBytes = 0;
-        try {
-          final dynamic s = file.size;
-          if (s != null) sizeBytes = s as num;
-        } catch (_) {}
+    _isPickingFile = true;
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
+        allowMultiple: multiple,
+        withData: false,
+        withReadStream: false,
+      );
+      if (result == null || !mounted) return;
+
+      final remainingSlots = _maxAllowedFiles - _newRuleFiles.length;
+      bool exceeded = false;
+
+      final List<Map<String, String>> newFiles = [];
+      for (final file in result.files) {
+        if (newFiles.length >= remainingSlots) {
+          exceeded = true;
+          break;
+        }
+        final String name =
+            file.name.isNotEmpty ? file.name : 'regulatory_document.pdf';
+        final int sizeBytes = file.size > 0 ? file.size : 1024 * 500;
         final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 2.1;
         final sizeMb = '${mb.toStringAsFixed(1)} MB';
+        newFiles.add({'name': name, 'size': sizeMb});
+      }
 
+      if (newFiles.isNotEmpty && mounted) {
         setState(() {
-          _newCircularFileName = name;
-          _newCircularFileSize = sizeMb;
+          _newRuleFiles.addAll(newFiles);
+          _newCircularFileName = _newRuleFiles.first['name'] ?? '';
+          _newCircularFileSize = _newRuleFiles.first['size'] ?? '';
           _hasSelectedFile = true;
-          _fileName = name;
-          _fileSize = sizeMb;
+          if (_fileName.isEmpty) {
+            _fileName = _newRuleFiles.first['name'] ?? '';
+            _fileSize = _newRuleFiles.first['size'] ?? '';
+          }
         });
       }
-    } catch (_) {}
-  }
 
-  Future<void> _handleChooseFile() async {
-    await _handleChooseExistingFile(multiple: false);
+      if (exceeded && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Limit applied: maximum 10 files allowed. Extra files were not added.',
+              style: TextStyle(fontFamily: 'packages/cidan/Poppins'),
+            ),
+            backgroundColor: Color(0xFFF59E0B),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error choosing new rule files: $e');
+    } finally {
+      _isPickingFile = false;
+    }
   }
 
   void _handleRemoveFile() {
@@ -189,12 +287,18 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       _fileSize = '';
       _newCircularFileName = '';
       _newCircularFileSize = '';
+      _existingRulesFiles.clear();
+      _newRuleFiles.clear();
     });
   }
 
   Future<void> _startUploadAndAnalysis() async {
     if (!_hasSelectedFile) {
-      if (_newCircularFileName.isNotEmpty) {
+      if (_newRuleFiles.isNotEmpty) {
+        _fileName = _newRuleFiles.first['name'] ?? 'new_circular.pdf';
+        _fileSize = _newRuleFiles.first['size'] ?? '2.1 MB';
+        _hasSelectedFile = true;
+      } else if (_newCircularFileName.isNotEmpty) {
         _fileName = _newCircularFileName;
         _fileSize = _newCircularFileSize;
         _hasSelectedFile = true;
@@ -978,13 +1082,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         // 1. Hero Branding & 3D Illustration Section
         _buildHeroHeaderSection(),
 
-        // 2. Card 1: Existing Rules (Collapsible)
+        // 2. Card 2: New Rule Input (Circular / Update) (Collapsible)
+        _buildNewRuleInputCard(),
+
+        // 3. Card 1: Existing Rules (Collapsible)
         _buildExistingRulesCard(),
 
         const SizedBox(height: 14),
-
-        // 3. Card 2: New Rule Input (Circular / Update) (Collapsible)
-        _buildNewRuleInputCard(),
 
         const SizedBox(height: 18),
 
@@ -1196,74 +1300,40 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Action Buttons: Choose Files & Add Multiple
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Choose Files (Outlined)
-                              OutlinedButton.icon(
-                                onPressed: () =>
-                                    _handleChooseExistingFile(multiple: false),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF4F46E5),
-                                  side: const BorderSide(
-                                    color: Color(0xFF4F46E5),
-                                    width: 1.2,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  backgroundColor: Colors.white,
-                                ),
-                                icon: const Icon(
-                                  Icons.folder_open_rounded,
-                                  size: 16,
+                          // Action Button: Choose File (allows single or multiple files)
+                          Center(
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  _handleChooseExistingFile(multiple: true),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF4F46E5),
+                                side: const BorderSide(
                                   color: Color(0xFF4F46E5),
+                                  width: 1.2,
                                 ),
-                                label: const Text(
-                                  'Choose Files',
-                                  style: TextStyle(
-                                    fontFamily: 'packages/cidan/Poppins',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 22,
+                                  vertical: 9,
+                                ),
+                                backgroundColor: Colors.white,
+                              ),
+                              icon: const Icon(
+                                Icons.folder_open_rounded,
+                                size: 17,
+                                color: Color(0xFF4F46E5),
+                              ),
+                              label: const Text(
+                                'Choose File',
+                                style: TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              // Add Multiple (Filled Tinted)
-                              TextButton.icon(
-                                onPressed: () =>
-                                    _handleChooseExistingFile(multiple: true),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF4F46E5),
-                                  backgroundColor: const Color(0xFFEEF2FF),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.layers_outlined,
-                                  size: 16,
-                                  color: Color(0xFF4F46E5),
-                                ),
-                                label: const Text(
-                                  'Add Multiple',
-                                  style: TextStyle(
-                                    fontFamily: 'packages/cidan/Poppins',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -1271,7 +1341,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Supported: PDF, DOCX, DOC, TXT, PNG, JPG (Max 50 MB per file)',
+                    'Supported: PDF, PNG, JPG, DOCX, DOC, TXT (Max 10 files, 50 MB each)',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'packages/cidan/Poppins',
@@ -1279,76 +1349,133 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       color: Color(0xFF94A3B8),
                     ),
                   ),
+                  const SizedBox(height: 6),
 
-                  // Display selected files list
+                  // Display selected files list (Scrollable to avoid overflow)
                   if (_existingRulesFiles.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          _existingRulesFiles.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final f = entry.value;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_existingRulesFiles.length}/$_maxAllowedFiles files selected',
+                          style: const TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _existingRulesFiles.clear();
+                              if (_newRuleFiles.isEmpty &&
+                                  _newCircularFileName.isEmpty) {
+                                _hasSelectedFile = false;
+                                _fileName = '';
+                                _fileSize = '';
+                              }
+                            });
+                          },
+                          child: const Text(
+                            'Clear all',
+                            style: TextStyle(
+                              fontFamily: 'packages/cidan/Poppins',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFEF4444),
+                            ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.description_rounded,
-                                size: 14,
-                                color: Color(0xFF4F46E5),
-                              ),
-                              const SizedBox(width: 5),
-                              ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 150),
-                                child: Text(
-                                  f['name'] ?? '',
-                                  style: const TextStyle(
-                                    fontFamily: 'packages/cidan/Poppins',
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 140),
+                      child: Scrollbar(
+                        thumbVisibility: _existingRulesFiles.length > 3,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _existingRulesFiles
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                              final idx = entry.key;
+                              final f = entry.value;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '(${f['size']})',
-                                style: const TextStyle(
-                                  fontFamily: 'packages/cidan/Poppins',
-                                  fontSize: 10,
-                                  color: Color(0xFF64748B),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: const Color(0xFFCBD5E1)),
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _existingRulesFiles.removeAt(idx);
-                                  });
-                                },
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  size: 14,
-                                  color: Color(0xFF64748B),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getFileIcon(f['name'] ?? ''),
+                                      size: 14,
+                                      color: _getFileIconColor(f['name'] ?? ''),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 150),
+                                      child: Text(
+                                        f['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontFamily: 'packages/cidan/Poppins',
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '(${f['size']})',
+                                      style: const TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 10,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _existingRulesFiles.removeAt(idx);
+                                          if (_existingRulesFiles.isEmpty &&
+                                              _newRuleFiles.isEmpty &&
+                                              _newCircularFileName.isEmpty) {
+                                            _hasSelectedFile = false;
+                                            _fileName = '';
+                                            _fileSize = '';
+                                          }
+                                        });
+                                      },
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                            }).toList(),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -1676,10 +1803,10 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       ),
                     ),
                   ] else ...[
-                    // Upload Document for New Rule
-                    if (_newCircularFileName.isEmpty)
+                    // Upload Document for Existing Rules
+                    if (_newRuleFiles.isEmpty)
                       InkWell(
-                        onTap: _handleChooseNewRuleFile,
+                        onTap: () => _handleChooseNewRuleFile(multiple: true),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -1692,15 +1819,15 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             border: Border.all(color: const Color(0xFFC7D2FE)),
                           ),
                           child: Column(
-                            children: const [
-                              Icon(
+                            children: [
+                              const Icon(
                                 Icons.cloud_upload_outlined,
                                 size: 30,
                                 color: Color(0xFF4F46E5),
                               ),
-                              SizedBox(height: 6),
-                              Text(
-                                'Select New Circular Document',
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Select Regulatory Document(s) or Images',
                                 style: TextStyle(
                                   fontFamily: 'packages/cidan/Poppins',
                                   fontSize: 13.5,
@@ -1708,79 +1835,254 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                   color: Color(0xFF0F172A),
                                 ),
                               ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Tap to choose PDF, DOCX, or DOC',
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Choose up to 10 files: PDF, images, or both combined\n(Tip: Pick up to 4 photos per batch for camera gallery)',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'packages/cidan/Poppins',
-                                  fontSize: 11.5,
+                                  fontSize: 11,
                                   color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    _handleChooseNewRuleFile(multiple: true),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4F46E5),
+                                  side: const BorderSide(
+                                    color: Color(0xFF4F46E5),
+                                    width: 1.2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 8,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                ),
+                                icon: const Icon(
+                                  Icons.folder_open_rounded,
+                                  size: 16,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                                label: const Text(
+                                  'Choose File',
+                                  style: TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       )
-                    else
+                    else ...[
+                      // Header Row with count and Clear all
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${_newRuleFiles.length}/$_maxAllowedFiles files uploaded',
+                            style: const TextStyle(
+                              fontFamily: 'packages/cidan/Poppins',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _newRuleFiles.clear();
+                                _newCircularFileName = '';
+                                _newCircularFileSize = '';
+                                if (_existingRulesFiles.isEmpty) {
+                                  _hasSelectedFile = false;
+                                  _fileName = '';
+                                  _fileSize = '';
+                                }
+                              });
+                            },
+                            child: const Text(
+                              'Clear all',
+                              style: TextStyle(
+                                fontFamily: 'packages/cidan/Poppins',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFEF4444),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Scrollable files list to avoid overflow
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.picture_as_pdf_rounded,
-                              color: Color(0xFFEF4444),
-                              size: 24,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _newCircularFileName,
-                                    style: const TextStyle(
-                                      fontFamily: 'packages/cidan/Poppins',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        child: Scrollbar(
+                          thumbVisibility: _newRuleFiles.length > 2,
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              children:
+                                  _newRuleFiles.asMap().entries.map((entry) {
+                                final idx = entry.key;
+                                final file = entry.value;
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
                                   ),
-                                  Text(
-                                    _newCircularFileSize,
-                                    style: const TextStyle(
-                                      fontFamily: 'packages/cidan/Poppins',
-                                      fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
                                     ),
                                   ),
-                                ],
-                              ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _getFileIcon(file['name'] ?? ''),
+                                        color: _getFileIconColor(
+                                            file['name'] ?? ''),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              file['name'] ?? '',
+                                              style: const TextStyle(
+                                                fontFamily:
+                                                    'packages/cidan/Poppins',
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              file['size'] ?? '',
+                                              style: const TextStyle(
+                                                fontFamily:
+                                                    'packages/cidan/Poppins',
+                                                fontSize: 10.5,
+                                                color: Color(0xFF64748B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.close_rounded,
+                                          size: 16,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          setState(() {
+                                            _newRuleFiles.removeAt(idx);
+                                            if (_newRuleFiles.isEmpty) {
+                                              _newCircularFileName = '';
+                                              _newCircularFileSize = '';
+                                              if (_existingRulesFiles.isEmpty) {
+                                                _hasSelectedFile = false;
+                                                _fileName = '';
+                                                _fileSize = '';
+                                              }
+                                            } else {
+                                              _newCircularFileName =
+                                                  _newRuleFiles.first['name'] ??
+                                                      '';
+                                              _newCircularFileSize =
+                                                  _newRuleFiles.first['size'] ??
+                                                      '';
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                size: 18,
-                                color: Color(0xFF64748B),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _newCircularFileName = '';
-                                  _newCircularFileSize = '';
-                                });
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      // Action to Add More Files (if under max 10 files)
+                      if (_newRuleFiles.length < _maxAllowedFiles)
+                        Center(
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                _handleChooseNewRuleFile(multiple: true),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF4F46E5),
+                              side: const BorderSide(
+                                color: Color(0xFF4F46E5),
+                                width: 1.1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              backgroundColor: Colors.white,
+                            ),
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              size: 15,
+                              color: Color(0xFF4F46E5),
+                            ),
+                            label: Text(
+                              'Choose More Files (${_maxAllowedFiles - _newRuleFiles.length} left)',
+                              style: const TextStyle(
+                                fontFamily: 'packages/cidan/Poppins',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Maximum 10 files limit reached',
+                              style: TextStyle(
+                                fontFamily: 'packages/cidan/Poppins',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ],
                 ],
               ),
@@ -2308,56 +2610,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     );
   }
 
-  // Upload & Process Button with Right Arrow matching mockup
-  Widget _buildUploadAndProcessButton(Size size) {
-    final buttonHeight = (size.height * 0.058).clamp(44.0, 50.0);
-
-    return Container(
-      height: buttonHeight,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4338CA), Color(0xFF4F46E5)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4F46E5).withAlpha(80),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _startUploadAndAnalysis,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Upload & Process',
-              style: TextStyle(
-                fontFamily: 'packages/cidan/Poppins',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                letterSpacing: 0.2,
-              ),
-            ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Completed Document Processed Successfully
   Widget _buildCompletedContent(Size size) {
     final isCompact = size.height < 720;
@@ -2734,85 +2986,3 @@ class _PdfPagePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Soft Lavender Puffy Cloud with Upward Arrow
-class _CloudUploadIcon extends StatelessWidget {
-  final bool isCompact;
-  final double? customSize;
-  const _CloudUploadIcon({this.isCompact = false, this.customSize});
-
-  @override
-  Widget build(BuildContext context) {
-    final h = customSize ?? (isCompact ? 36.0 : 52.0);
-    final w =
-        customSize != null ? customSize! * 1.45 : (isCompact ? 54.0 : 76.0);
-    return SizedBox(
-      width: w,
-      height: h,
-      child: CustomPaint(painter: _CloudPainter()),
-    );
-  }
-}
-
-class _CloudPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Soft Lavender Puffy Cloud Shape
-    final cloudPaint = Paint()
-      ..color = const Color(0xFFECEFFD)
-      ..style = PaintingStyle.fill;
-
-    final cloudPath = Path();
-    // Rounded base pill
-    final baseRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.08, h * 0.40, w * 0.84, h * 0.52),
-      Radius.circular(h * 0.26),
-    );
-    cloudPath.addRRect(baseRect);
-
-    // Left puff
-    cloudPath.addOval(
-      Rect.fromCircle(center: Offset(w * 0.32, h * 0.46), radius: h * 0.34),
-    );
-    // Center big puff
-    cloudPath.addOval(
-      Rect.fromCircle(center: Offset(w * 0.52, h * 0.36), radius: h * 0.36),
-    );
-    // Right puff
-    cloudPath.addOval(
-      Rect.fromCircle(center: Offset(w * 0.70, h * 0.48), radius: h * 0.28),
-    );
-
-    canvas.drawPath(cloudPath, cloudPaint);
-
-    // Bold Purple Upward Arrow in the center
-    final arrowPaint = Paint()
-      ..color = const Color(0xFF4F46E5)
-      ..style = PaintingStyle.fill;
-
-    final cx = w * 0.50;
-    final arrowTop = h * 0.32;
-    final arrowBottom = h * 0.74;
-    final headHeight = (arrowBottom - arrowTop) * 0.52;
-    const headWidth = 22.0;
-    const stemWidth = 7.0;
-
-    final arrowPath = Path()
-      // Arrow head peak
-      ..moveTo(cx, arrowTop)
-      ..lineTo(cx + headWidth / 2, arrowTop + headHeight)
-      ..lineTo(cx + stemWidth / 2, arrowTop + headHeight)
-      ..lineTo(cx + stemWidth / 2, arrowBottom)
-      ..lineTo(cx - stemWidth / 2, arrowBottom)
-      ..lineTo(cx - stemWidth / 2, arrowTop + headHeight)
-      ..lineTo(cx - headWidth / 2, arrowTop + headHeight)
-      ..close();
-
-    canvas.drawPath(arrowPath, arrowPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
