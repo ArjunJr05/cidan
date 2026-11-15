@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6
+
+- Resolved cross-version static analysis compatibility with `file_picker` 11.x, 12.x, and 13.x on pub.dev Pana analysis.
+- Restored multi-platform support score (iOS, Android, Web, Windows, macOS, Linux).
+- Dynamic parameter compatibility for `pickFiles` across legacy and federated plugin architectures.
+
 ## 1.0.5
 
 - Streamlined document uploading with a unified single "Choose File" button supporting multi-file selection.

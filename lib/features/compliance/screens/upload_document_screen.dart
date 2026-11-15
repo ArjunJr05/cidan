@@ -126,6 +126,73 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     }
   }
 
+  Future<dynamic> _pickFilesCompat() async {
+    try {
+      return await (FilePicker.pickFiles as dynamic)(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
+        allowMultiple: true,
+      );
+    } catch (_) {
+      try {
+        return await FilePicker.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
+        );
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  Future<List<Map<String, String>>> _extractFilesFromPickerResult(
+    dynamic result,
+    int remainingSlots,
+    String defaultName,
+    double defaultMb,
+  ) async {
+    final List<dynamic> pickedFiles = <dynamic>[];
+    if (result is List) {
+      pickedFiles.addAll(result);
+    } else if (result != null) {
+      try {
+        final dynamic legacyFiles = (result as dynamic).files;
+        if (legacyFiles is List) {
+          pickedFiles.addAll(legacyFiles);
+        }
+      } catch (_) {}
+    }
+
+    final List<Map<String, String>> newFiles = [];
+    for (final dynamic file in pickedFiles) {
+      if (newFiles.length >= remainingSlots) {
+        break;
+      }
+      final String name = file.name?.toString() ?? defaultName;
+      num sizeBytes = 0;
+      try {
+        final dynamic s = file.size;
+        if (s != null) sizeBytes = s as num;
+      } catch (_) {}
+      if (sizeBytes == 0) {
+        try {
+          final dynamic s = file.lengthSync();
+          if (s != null) sizeBytes = s as num;
+        } catch (_) {}
+      }
+      if (sizeBytes == 0) {
+        try {
+          final dynamic s = await file.length();
+          if (s != null) sizeBytes = s as num;
+        } catch (_) {}
+      }
+      final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : defaultMb;
+      final sizeMb = '${mb.toStringAsFixed(1)} MB';
+      newFiles.add({'name': name, 'size': sizeMb});
+    }
+    return newFiles;
+  }
+
   Future<void> _handleChooseExistingFile({bool multiple = true}) async {
     if (_isPickingFile) return;
     if (_existingRulesFiles.length >= _maxAllowedFiles) {
@@ -146,31 +213,16 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     _isPickingFile = true;
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
-        allowMultiple: multiple,
-        withData: false,
-        withReadStream: false,
-      );
+      final dynamic result = await _pickFilesCompat();
       if (result == null || !mounted) return;
 
       final remainingSlots = _maxAllowedFiles - _existingRulesFiles.length;
-      bool exceeded = false;
-
-      final List<Map<String, String>> newFiles = [];
-      for (final file in result.files) {
-        if (newFiles.length >= remainingSlots) {
-          exceeded = true;
-          break;
-        }
-        final String name =
-            file.name.isNotEmpty ? file.name : 'existing_rule.pdf';
-        final int sizeBytes = file.size > 0 ? file.size : 1024 * 500;
-        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 1.5;
-        final sizeMb = '${mb.toStringAsFixed(1)} MB';
-        newFiles.add({'name': name, 'size': sizeMb});
-      }
+      final newFiles = await _extractFilesFromPickerResult(
+        result,
+        remainingSlots,
+        'existing_rule.pdf',
+        1.5,
+      );
 
       if (newFiles.isNotEmpty && mounted) {
         setState(() {
@@ -183,7 +235,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         });
       }
 
-      if (exceeded && mounted) {
+      int totalCount = newFiles.length;
+      if (result is List) {
+        totalCount = result.length;
+      } else {
+        try {
+          final dynamic files = (result as dynamic).files;
+          if (files is List) totalCount = files.length;
+        } catch (_) {}
+      }
+
+      if (totalCount > remainingSlots && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -222,31 +284,16 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     _isPickingFile = true;
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'doc', 'txt'],
-        allowMultiple: multiple,
-        withData: false,
-        withReadStream: false,
-      );
+      final dynamic result = await _pickFilesCompat();
       if (result == null || !mounted) return;
 
       final remainingSlots = _maxAllowedFiles - _newRuleFiles.length;
-      bool exceeded = false;
-
-      final List<Map<String, String>> newFiles = [];
-      for (final file in result.files) {
-        if (newFiles.length >= remainingSlots) {
-          exceeded = true;
-          break;
-        }
-        final String name =
-            file.name.isNotEmpty ? file.name : 'regulatory_document.pdf';
-        final int sizeBytes = file.size > 0 ? file.size : 1024 * 500;
-        final double mb = sizeBytes > 0 ? sizeBytes / (1024 * 1024) : 2.1;
-        final sizeMb = '${mb.toStringAsFixed(1)} MB';
-        newFiles.add({'name': name, 'size': sizeMb});
-      }
+      final newFiles = await _extractFilesFromPickerResult(
+        result,
+        remainingSlots,
+        'regulatory_document.pdf',
+        2.1,
+      );
 
       if (newFiles.isNotEmpty && mounted) {
         setState(() {
@@ -261,7 +308,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         });
       }
 
-      if (exceeded && mounted) {
+      int totalCount = newFiles.length;
+      if (result is List) {
+        totalCount = result.length;
+      } else {
+        try {
+          final dynamic files = (result as dynamic).files;
+          if (files is List) totalCount = files.length;
+        } catch (_) {}
+      }
+
+      if (totalCount > remainingSlots && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
