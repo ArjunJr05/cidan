@@ -1,5 +1,4 @@
-﻿import 'dart:async';
-import 'dart:math' as math;
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +44,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   bool _newRuleExpanded = true;
   final List<Map<String, String>> _newRuleFiles = [];
   String _newCircularFileName = '';
-  String _newCircularFileSize = '';
 
   bool get _hasExistingRulesInput {
     if (_existingRulesInputMode == 1) {
@@ -63,7 +61,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   bool get _isAnalyzeEnabled => _hasExistingRulesInput && _hasNewRuleInput;
 
   // File selection state
-  bool _hasSelectedFile = false;
   bool _isPickingFile = false;
   String _fileName = '';
   String _fileSize = '';
@@ -95,7 +92,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     _currentStep = widget.initialStep;
     if (widget.initialFileName != null && widget.initialFileName!.isNotEmpty) {
       _fileName = widget.initialFileName!;
-      _hasSelectedFile = true;
     }
     if (widget.initialFileSize != null && widget.initialFileSize!.isNotEmpty) {
       _fileSize = widget.initialFileSize!;
@@ -266,7 +262,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       if (newFiles.isNotEmpty && mounted) {
         setState(() {
           _existingRulesFiles.addAll(newFiles);
-          _hasSelectedFile = true;
           if (_fileName.isEmpty) {
             _fileName = newFiles.first['name'] ?? 'existing_rule.pdf';
             _fileSize = newFiles.first['size'] ?? '1.5 MB';
@@ -338,8 +333,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         setState(() {
           _newRuleFiles.addAll(newFiles);
           _newCircularFileName = _newRuleFiles.first['name'] ?? '';
-          _newCircularFileSize = _newRuleFiles.first['size'] ?? '';
-          _hasSelectedFile = true;
           if (_fileName.isEmpty) {
             _fileName = _newRuleFiles.first['name'] ?? '';
             _fileSize = _newRuleFiles.first['size'] ?? '';
@@ -378,11 +371,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
   void _handleRemoveFile() {
     setState(() {
-      _hasSelectedFile = false;
       _fileName = '';
       _fileSize = '';
       _newCircularFileName = '';
-      _newCircularFileSize = '';
       _existingRulesFiles.clear();
       _newRuleFiles.clear();
       _analysisReport = null;
@@ -418,21 +409,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     if (_newRuleFiles.isNotEmpty) {
       _fileName = _newRuleFiles.first['name'] ?? 'new_circular.pdf';
       _fileSize = _newRuleFiles.first['size'] ?? '2.1 MB';
-      _hasSelectedFile = true;
     } else if (_existingRulesFiles.isNotEmpty) {
       _fileName = _existingRulesFiles.first['name'] ?? 'existing_rule.pdf';
       _fileSize = _existingRulesFiles.first['size'] ?? '1.5 MB';
-      _hasSelectedFile = true;
     } else if (_endpointControllers.isNotEmpty &&
         _endpointControllers.first.text.trim().isNotEmpty) {
       _fileName =
           'Endpoint_Rule_${DateTime.now().millisecondsSinceEpoch % 10000}.pdf';
       _fileSize = '1.8 MB';
-      _hasSelectedFile = true;
     } else {
       _fileName = 'TNext-SE-2026-J_2625-Rules.pdf';
       _fileSize = '2.4 MB';
-      _hasSelectedFile = true;
     }
 
     _isCancelled = false;
@@ -571,7 +558,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       if (deployed == true && mounted) {
         setState(() {
           _currentStep = UploadProcessStep.completed;
-          _hasSelectedFile = true;
           if (_fileName.isEmpty) {
             _fileName = file;
           }
@@ -606,7 +592,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         setState(() {
           _fileName = filename;
           _fileSize = (item['file_size'] as String?) ?? '2.4 MB';
-          _hasSelectedFile = true;
           _currentStep = UploadProcessStep.completed;
         });
       }
@@ -1117,15 +1102,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     );
   }
 
-  // 3D Isometric CIDAN Cube Logo
-  Widget _buildCidanCubeLogo() {
-    return SizedBox(
-      width: 36,
-      height: 36,
-      child: CustomPaint(painter: _CidanCubePainter()),
-    );
-  }
-
   // Floating AI Assistant Button
   Widget _buildFloatingAiBotButton() {
     return Container(
@@ -1620,7 +1596,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                 _existingRulesFiles.clear();
                                 if (_newRuleFiles.isEmpty &&
                                     _newCircularFileName.isEmpty) {
-                                  _hasSelectedFile = false;
                                   _fileName = '';
                                   _fileSize = '';
                                 }
@@ -1707,7 +1682,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                             if (_existingRulesFiles.isEmpty &&
                                                 _newRuleFiles.isEmpty &&
                                                 _newCircularFileName.isEmpty) {
-                                              _hasSelectedFile = false;
                                               _fileName = '';
                                               _fileSize = '';
                                             }
@@ -2105,9 +2079,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             setState(() {
                               _newRuleFiles.clear();
                               _newCircularFileName = '';
-                              _newCircularFileSize = '';
                               if (_existingRulesFiles.isEmpty) {
-                                _hasSelectedFile = false;
                                 _fileName = '';
                                 _fileSize = '';
                               }
@@ -2190,18 +2162,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                           _newRuleFiles.removeAt(idx);
                                           if (_newRuleFiles.isEmpty) {
                                             _newCircularFileName = '';
-                                            _newCircularFileSize = '';
                                             if (_existingRulesFiles.isEmpty) {
-                                              _hasSelectedFile = false;
                                               _fileName = '';
                                               _fileSize = '';
                                             }
                                           } else {
                                             _newCircularFileName =
                                                 _newRuleFiles.first['name'] ??
-                                                    '';
-                                            _newCircularFileSize =
-                                                _newRuleFiles.first['size'] ??
                                                     '';
                                           }
                                         });
@@ -3077,88 +3044,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       ),
     );
   }
-}
-
-// Custom Painter for 3D Isometric CIDAN Cube Logo
-class _CidanCubePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width * 0.46;
-
-    // Hexagon vertices
-    final points = <Offset>[];
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * math.pi / 180;
-      points.add(Offset(cx + r * math.cos(angle), cy + r * math.sin(angle)));
-    }
-
-    // Top Rhombus Face
-    final topPath = Path()
-      ..moveTo(cx, cy)
-      ..lineTo(points[5].dx, points[5].dy)
-      ..lineTo(points[0].dx, points[0].dy)
-      ..lineTo(points[1].dx, points[1].dy)
-      ..close();
-    final topPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF818CF8), Color(0xFF6366F1)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(topPath, topPaint);
-
-    // Left Rhombus Face
-    final leftPath = Path()
-      ..moveTo(cx, cy)
-      ..lineTo(points[1].dx, points[1].dy)
-      ..lineTo(points[2].dx, points[2].dy)
-      ..lineTo(points[3].dx, points[3].dy)
-      ..close();
-    final leftPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(leftPath, leftPaint);
-
-    // Right Rhombus Face
-    final rightPath = Path()
-      ..moveTo(cx, cy)
-      ..lineTo(points[3].dx, points[3].dy)
-      ..lineTo(points[4].dx, points[4].dy)
-      ..lineTo(points[5].dx, points[5].dy)
-      ..close();
-    final rightPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF4F46E5), Color(0xFF3730A3)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(rightPath, rightPaint);
-
-    // Internal isometric wire line accents
-    final linePaint = Paint()
-      ..color = Colors.white.withAlpha(180)
-      ..strokeWidth = 1.4
-      ..style = PaintingStyle.stroke;
-
-    final centerSmallR = r * 0.45;
-    final innerPath = Path()
-      ..moveTo(cx, cy - centerSmallR * 0.9)
-      ..lineTo(cx + centerSmallR * 0.8, cy - centerSmallR * 0.4)
-      ..lineTo(cx + centerSmallR * 0.8, cy + centerSmallR * 0.5)
-      ..lineTo(cx, cy + centerSmallR * 0.9)
-      ..lineTo(cx - centerSmallR * 0.8, cy + centerSmallR * 0.5)
-      ..lineTo(cx - centerSmallR * 0.8, cy - centerSmallR * 0.4)
-      ..close();
-    canvas.drawPath(innerPath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Red PDF Document badge matching design mockup

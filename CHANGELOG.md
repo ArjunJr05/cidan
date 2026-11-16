@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.8
+
+- Completely reset and clear all previously uploaded documents (Existing Rules and New Rule Input) and endpoint controllers when tapping "Upload Another".
+- Automated redirection to the "Document Processed Successfully" screen immediately upon regulatory rule deployment.
+- Fixed static analysis compatibility with `file_picker` 12.x/13.x by using standard static `FilePicker.pickFiles` (removing unsupported `.platform`, `allowMultiple`, and `withData` calls) to ensure 50/50 static analysis and 160/160 total pub points.
+- Reduced vertical spacing between the verified bank checklist banner and the completion title for optimal visual layout.
+- Maintained 100% full platform support across Android, iOS, Linux, macOS, Windows, and Web (20/20 points).
+
 ## 1.0.7
 
 - Display "Existing Rules" first and "New Rule Input (Circular / Update)" second on the upload screen.
