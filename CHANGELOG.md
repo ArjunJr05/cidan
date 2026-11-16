@@ -2,9 +2,13 @@
 
 ## 1.0.9
 
-- Eliminated static analysis warnings (`unused_field` and `unused_element`) in `upload_document_screen.dart` for a perfect 50/50 static analysis score.
-- Full WebAssembly (WASM) compatibility via conditional SMTP export architecture (`smtp_dispatcher.dart`), restoring 20/20 points for Platform support.
-- Fully verified 160/160 pub points score on pub.dev Pana analysis.
+- Full WebAssembly (WASM) compatibility:
+  - Decoupled `dart:io` and `path_provider` in `compliance_dashboard_screen.dart` using a conditional export architecture (`report_file_saver.dart`).
+  - Decoupled `mailer` in `supabase_service.dart` via conditional export (`smtp_dispatcher.dart`).
+  - Replaced `dart:io` `HttpClient` in `cidan_api_service.dart` with cross-platform `package:http`.
+- Eliminated all static analysis warnings (`unused_field`, `unused_element`, and unused imports) for 50/50 static analysis score.
+- Restored full 20/20 Platform support points on pub.dev Pana analysis (Android, iOS, Web, Windows, macOS, Linux + WASM).
+- 100% test suite verified and ready for 160/160 pub points.
 
 ## 1.0.8
 
