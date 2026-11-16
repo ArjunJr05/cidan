@@ -1,6 +1,6 @@
 name: cidan
 description: AI-powered regulatory compliance, circular ingestion, and policy validation engine for Flutter applications.
-version: 1.0.6
+version: 1.0.7
 homepage: https://github.com/ArjunJr05/cidan
 repository: https://github.com/ArjunJr05/cidan
 issue_tracker: https://github.com/ArjunJr05/cidan/issues
@@ -15,6 +15,7 @@ platforms:
   linux:
   macos:
   windows:
+  web:
 
 dependencies:
   flutter:
@@ -57,11 +58,6 @@ flutter:
     - assests/animation/
     - assests/videos/
     - assets/videos/
-    - assests/Secure Banking Made Simple.png
-    - assests/Verify Your Email with Cidan.png
-    - assests/Regulatory Compliance AI Hero Banner.png
-    - assests/Verified Bank Checklist.png
-    - assests/Pastel Lavender Waves and Leaves.png
 
   fonts:
     - family: Poppins

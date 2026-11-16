@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.7
+
+- Display "Existing Rules" first and "New Rule Input (Circular / Update)" second on the upload screen.
+- Dynamic gating: "Analyze & Generate" button is only enabled when at least 1 document or input is entered in both Existing Rules and New Rule sections.
+- Visual disabled and active states for "Analyze & Generate" button with dynamic guidance helper message.
+- Added Web platform declaration in `pubspec.yaml` to ensure full 6/6 platform compatibility.
+- Fixed file length resolution in `_extractFilesFromPickerResult` to prevent `NoSuchMethodError` and debugger pauses.
+
 ## 1.0.6
 
 - Resolved cross-version static analysis compatibility with `file_picker` 11.x, 12.x, and 13.x on pub.dev Pana analysis.

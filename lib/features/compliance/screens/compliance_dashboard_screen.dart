@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/compliance_report_model.dart';
 import '../services/cidan_api_service.dart';
+import 'upload_document_screen.dart';
 
 class ComplianceDashboardScreen extends StatefulWidget {
   final ComplianceReportModel report;
@@ -102,6 +103,24 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
         ),
       ),
     );
+
+    // Wait briefly (600ms) for the confirmation feedback, then move directly to Document Processed Successfully page
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(true);
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => UploadDocumentScreen(
+            email: email,
+            initialStep: UploadProcessStep.completed,
+            initialFileName: widget.uploadedFileName,
+          ),
+        ),
+      );
+    }
   }
 
   void _showPdfDocumentModal() {
@@ -111,8 +130,7 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => _CompliancePdfDocumentModal(
         report: widget.report,
-        fileName:
-            widget.uploadedFileName ??
+        fileName: widget.uploadedFileName ??
             'CIDAN_Synthetic_RBI_Style_Loan_Approval_Circular_8_pages.pdf',
         isApproved: _isApproved,
       ),
@@ -702,9 +720,8 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                 fontFamily: 'packages/cidan/Poppins',
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: isPass
-                    ? const Color(0xFF047857)
-                    : const Color(0xFFD97706),
+                color:
+                    isPass ? const Color(0xFF047857) : const Color(0xFFD97706),
               ),
             ),
           ),
@@ -1916,9 +1933,8 @@ class _CompliancePdfDocumentModalState
                     SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: _isDownloading
-                            ? null
-                            : () => _handleDownload(),
+                        onPressed:
+                            _isDownloading ? null : () => _handleDownload(),
                         icon: _isDownloading
                             ? const SizedBox(
                                 width: 16,
