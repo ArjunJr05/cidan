@@ -201,6 +201,17 @@ class _RuleMappingStudioScreenState extends State<RuleMappingStudioScreen>
       bankId: widget.bankId ?? 'apex-bank-01',
     );
 
+    if (decision == 'ACCEPTED' || decision == 'MODIFIED') {
+      await _apiService.createApprovalWorkflow(
+        ruleId: delta.previousRuleId ?? delta.id,
+        ruleName: delta.ruleName,
+        ruleIrSnapshot: customIr ?? (delta.proposedChange.isNotEmpty ? delta.proposedChange : (delta.newRequirementRepresentation ?? {})),
+        deltaId: delta.id,
+        category: delta.category,
+        bankId: widget.bankId ?? 'apex-bank-01',
+      );
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
