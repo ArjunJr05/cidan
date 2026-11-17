@@ -230,10 +230,11 @@ class _CircularMetadataDialogState extends State<CircularMetadataDialog> {
                           ),
                           const SizedBox(height: 4),
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: _issuingAuthority,
                             items: _authorities
                                 .map((a) =>
-                                    DropdownMenuItem(value: a, child: Text(a)))
+                                    DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis, maxLines: 1)))
                                 .toList(),
                             onChanged: (v) {
                               if (v != null) {
@@ -369,12 +370,13 @@ class _CircularMetadataDialogState extends State<CircularMetadataDialog> {
                     ),
                     const SizedBox(height: 4),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _commonCategories.contains(_categoryController.text)
                           ? _categoryController.text
                           : _commonCategories.first,
                       items: _commonCategories
                           .map((c) =>
-                              DropdownMenuItem(value: c, child: Text(c)))
+                              DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis, maxLines: 1)))
                           .toList(),
                       onChanged: (v) {
                         if (v != null) {

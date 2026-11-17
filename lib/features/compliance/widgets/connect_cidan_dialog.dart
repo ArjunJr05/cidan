@@ -718,6 +718,7 @@ class _ConnectCidanDialogState extends State<ConnectCidanDialog> {
         Row(
           children: [
             Expanded(
+              flex: 2,
               child: _buildDropdown(
                 label: 'HTTP Method',
                 value: _httpMethod,
@@ -732,6 +733,7 @@ class _ConnectCidanDialogState extends State<ConnectCidanDialog> {
             ),
             const SizedBox(width: 12),
             Expanded(
+              flex: 3,
               child: _buildDropdown(
                 label: 'Authentication Type',
                 value: _authType,
@@ -1068,15 +1070,41 @@ class _ConnectCidanDialogState extends State<ConnectCidanDialog> {
             fontWeight: FontWeight.w600,
             color: Color(0xFF334155),
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: value,
-          items: items,
+          items: items.map((item) {
+            if (item.child is Text) {
+              final textWidget = item.child as Text;
+              return DropdownMenuItem<String>(
+                key: item.key,
+                value: item.value,
+                enabled: item.enabled,
+                onTap: item.onTap,
+                alignment: item.alignment,
+                child: Text(
+                  textWidget.data ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textWidget.style ??
+                      const TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12,
+                        color: Color(0xFF0F172A),
+                      ),
+                ),
+              );
+            }
+            return item;
+          }).toList(),
           onChanged: onChanged,
           style: const TextStyle(
             fontFamily: 'packages/cidan/Poppins',
-            fontSize: 12.5,
+            fontSize: 12,
             color: Color(0xFF0F172A),
           ),
           decoration: InputDecoration(
@@ -1084,7 +1112,7 @@ class _ConnectCidanDialogState extends State<ConnectCidanDialog> {
             filled: true,
             fillColor: Colors.white,
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFFCBD5E1)),

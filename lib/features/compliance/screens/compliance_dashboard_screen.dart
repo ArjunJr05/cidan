@@ -187,311 +187,217 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
     );
   }
 
-  // 1. Top Bar matching the design in user image
+  // 1. Top Bar with responsive layout and scrollable action bar
   Widget _buildTopAppBar() {
     return Container(
       color: const Color(0xFFF8FAFC),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Circular Back Button
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Circular Back Button
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.chevron_left_rounded,
-                color: Color(0xFF0F172A),
-                size: 26,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Title & Subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Compliance Analysis',
-                  style: TextStyle(
-                    fontFamily: 'packages/cidan/Poppins',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                  child: const Icon(
+                    Icons.chevron_left_rounded,
                     color: Color(0xFF0F172A),
-                    letterSpacing: -0.3,
+                    size: 26,
                   ),
                 ),
-                SizedBox(height: 1),
-                Text(
-                  'Audit & Verification Dashboard',
-                  style: TextStyle(
-                    fontFamily: 'packages/cidan/Poppins',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
+              ),
+              const SizedBox(width: 12),
+
+              // Title & Subtitle (Full width, ellipsis protected, clean vertical layout)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Compliance Analysis',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      'Audit & Verification Dashboard',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Horizontally Scrollable Action Chips (Smooth, non-overflowing navigation)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildNavActionChip(
+                  icon: Icons.compare_arrows_rounded,
+                  label: 'Mapping Studio',
+                  bgColor: const Color(0xFFEEF2FF),
+                  borderColor: const Color(0xFFC7D2FE),
+                  textColor: const Color(0xFF4F46E5),
+                  iconColor: const Color(0xFF6366F1),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RuleMappingStudioScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildNavActionChip(
+                  icon: Icons.fact_check_outlined,
+                  label: 'Approvals',
+                  bgColor: const Color(0xFFF0FDF4),
+                  borderColor: const Color(0xFFBBF7D0),
+                  textColor: const Color(0xFF15803D),
+                  iconColor: const Color(0xFF16A34A),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ApprovalDashboardScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildNavActionChip(
+                  icon: Icons.science_outlined,
+                  label: 'Testing',
+                  bgColor: const Color(0xFFFEF3C7),
+                  borderColor: const Color(0xFFFDE68A),
+                  textColor: const Color(0xFFB45309),
+                  iconColor: const Color(0xFFD97706),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TestSimulationScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildNavActionChip(
+                  icon: Icons.history_edu_outlined,
+                  label: 'Versions',
+                  bgColor: const Color(0xFFE0E7FF),
+                  borderColor: const Color(0xFFC7D2FE),
+                  textColor: const Color(0xFF3730A3),
+                  iconColor: const Color(0xFF4338CA),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RuleVersionScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildNavActionChip(
+                  icon: Icons.rocket_launch_outlined,
+                  label: 'Deploy',
+                  bgColor: const Color(0xFFF3E8FF),
+                  borderColor: const Color(0xFFE9D5FF),
+                  textColor: const Color(0xFF7E22CE),
+                  iconColor: const Color(0xFF9333EA),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DeploymentConsoleScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildNavActionChip(
+                  icon: Icons.history_toggle_off,
+                  label: 'Audit Log',
+                  bgColor: const Color(0xFFF1F5F9),
+                  borderColor: const Color(0xFFE2E8F0),
+                  textColor: const Color(0xFF334155),
+                  iconColor: const Color(0xFF475569),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AuditTrailScreen(),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-
-          // Rule Mapping Studio Action Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const RuleMappingStudioScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFC7D2FE)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.compare_arrows_rounded, size: 16, color: Color(0xFF6366F1)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Mapping Studio',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF4F46E5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Approval Queue Navigation Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ApprovalDashboardScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.fact_check_outlined, size: 16, color: Color(0xFF16A34A)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Approvals',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF15803D),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Simulation & Testing Navigation Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const TestSimulationScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.science_outlined, size: 16, color: Color(0xFFD97706)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Testing',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFB45309),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Version History Navigation Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const RuleVersionScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E7FF),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFC7D2FE)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.history_edu_outlined, size: 16, color: Color(0xFF4338CA)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Versions',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF3730A3),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Deployment Console Navigation Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const DeploymentConsoleScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3E8FF),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE9D5FF)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.rocket_launch_outlined, size: 16, color: Color(0xFF9333EA)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Deploy',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF7E22CE),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Audit Trail Navigation Button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AuditTrailScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.history_toggle_off, size: 16, color: Color(0xFF475569)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Audit Log',
-                      style: TextStyle(
-                        fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNavActionChip({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required Color borderColor,
+    required Color textColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7.5),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: iconColor),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'packages/cidan/Poppins',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

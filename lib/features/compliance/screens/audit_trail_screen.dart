@@ -81,7 +81,9 @@ class _AuditTrailScreenState extends State<AuditTrailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Compliance Audit Trail & Notification Center',
+          'Audit Trail & Notifications',
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
