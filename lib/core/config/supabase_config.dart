@@ -23,24 +23,30 @@ class SupabaseConfig {
   }
 
   // =========================================================================
-  // 2. SMTP EMAIL CREDENTIALS (For sending live 6-digit OTP codes)
+  // 2. SMTP & AUTH DISPATCH CONFIGURATION
+  // Security Notice: SMTP credentials and email dispatching are strictly managed
+  // server-side by the CIDAN backend. No passwords or secret keys are stored in
+  // client source code.
   // =========================================================================
   /// SMTP Host for Gmail
-  static const String smtpHost = 'smtp.gmail.com';
+  static const String smtpHost =
+      String.fromEnvironment('SMTP_HOST', defaultValue: 'smtp.gmail.com');
 
   /// SMTP Port: 587 (STARTTLS) or 465 (SSL)
-  static const int smtpPort = 587;
+  static const int smtpPort =
+      int.fromEnvironment('SMTP_PORT', defaultValue: 587);
 
-  /// Sender email address
-  static const String smtpUsername = 'unknownhacker3d@gmail.com';
+  /// Sender email address (configured server-side)
+  static const String smtpUsername =
+      String.fromEnvironment('SMTP_USER', defaultValue: '');
 
-  /// Google App Password
-  static const String smtpPassword = 'munr mayy tdfc mzyl';
+  /// Google App Password - MOVED TO SERVER-SIDE ENVIRONMENT VARIABLES FOR SECURITY
+  static const String smtpPassword = '';
 
   /// Sender display name
   static const String senderName = 'CIDAN Regulatory AI';
 
-  /// True if SMTP credentials have been supplied
+  /// True if SMTP credentials have been supplied at build time via --dart-define
   static bool get isSmtpConfigured {
     return smtpUsername.isNotEmpty &&
         !smtpUsername.contains('YOUR_SENDER') &&

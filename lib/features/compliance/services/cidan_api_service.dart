@@ -576,6 +576,36 @@ class CidanApiService {
     return [];
   }
 
+  /// Securely dispatch OTP email via backend without exposing SMTP credentials in client
+  Future<bool> dispatchOtpEmail({
+    required String email,
+    required String otp,
+    String? bankId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth/dispatch-otp');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'email': email,
+              'otp': otp,
+              if (bankId != null) 'bank_id': bankId,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [CIDAN API] dispatchOtpEmail notice: $e');
+    }
+    return false;
+  }
+
   String _extractErrorMessage(String body) {
     try {
       final map = jsonDecode(body);

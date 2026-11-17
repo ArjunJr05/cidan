@@ -10,6 +10,7 @@ import '../../features/compliance/models/regulatory_document_model.dart';
 import '../../features/compliance/models/rule_ir_model.dart';
 import '../../features/compliance/models/rule_delta_model.dart';
 import '../../features/compliance/models/rule_validation_model.dart';
+import '../../features/compliance/services/cidan_api_service.dart';
 import '../config/supabase_config.dart';
 import 'smtp_dispatcher.dart';
 
@@ -149,7 +150,7 @@ class SupabaseService {
       });
     }
 
-    // 2. Dispatch live email via SMTP if credentials are provided
+    // 2. Dispatch live email via secure backend or direct SMTP
     bool emailSent = false;
     String? smtpError;
 
@@ -165,6 +166,16 @@ class SupabaseService {
       } catch (e) {
         smtpError = e.toString();
         debugPrint('⚠️ [CIDAN SMTP] Failed to send email: $e');
+      }
+    } else {
+      // Secure server-side OTP email dispatching via backend (no credentials in client)
+      try {
+        emailSent = await CidanApiService().dispatchOtpEmail(
+          email: cleanEmail,
+          otp: otp,
+        );
+      } catch (e) {
+        debugPrint('ℹ️ [CIDAN Auth] Server OTP dispatch notice: $e');
       }
     }
 

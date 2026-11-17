@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 import 'dart:io';
 import 'package:cidan/cidan.dart';
+import 'package:cidan/core/config/supabase_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,6 +23,10 @@ void main() {
     test(
       '2. Live OTP Generation, Verification & User Audit History',
       () async {
+        // Confirm client has no hardcoded SMTP passwords (security verification)
+        expect(SupabaseConfig.smtpPassword.isEmpty, isTrue);
+        expect(SupabaseConfig.isSmtpConfigured, isFalse);
+
         const testEmail = 'unknownhacker3d@gmail.com';
         final sendResult = await SupabaseService().sendAndSaveOtp(testEmail);
         expect(sendResult['success'], isTrue);
