@@ -4,6 +4,12 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/compliance/models/bank_integration_model.dart';
+import '../../features/compliance/models/existing_rule_model.dart';
+import '../../features/compliance/models/regulatory_document_model.dart';
+import '../../features/compliance/models/rule_ir_model.dart';
+import '../../features/compliance/models/rule_delta_model.dart';
+import '../../features/compliance/models/rule_validation_model.dart';
 import '../config/supabase_config.dart';
 import 'smtp_dispatcher.dart';
 
@@ -26,6 +32,21 @@ class SupabaseService {
   /// Persistent local cache for compliance reports
   final List<Map<String, dynamic>> _localReportStore = [];
   bool _localReportsLoaded = false;
+
+  /// In-memory cache for Milestone 1 bank integrations & rules
+  final List<Map<String, dynamic>> _localBanksStore = [];
+  final List<Map<String, dynamic>> _localBankIntegrationsStore = [];
+  final List<Map<String, dynamic>> _localIntegrationSourcesStore = [];
+  final List<Map<String, dynamic>> _localConnectionVerificationsStore = [];
+  final List<Map<String, dynamic>> _localExistingRulesStore = [];
+  final List<Map<String, dynamic>> _localRegulatoryDocumentsStore = [];
+
+  /// In-memory cache for Milestone 2 Rule IR, Delta Analysis, Mappings & Validations
+  final List<Map<String, dynamic>> _localRuleIRStore = [];
+  final List<Map<String, dynamic>> _localDeltaAnalysesStore = [];
+  final List<Map<String, dynamic>> _localRuleDeltasStore = [];
+  final List<Map<String, dynamic>> _localRuleMappingsStore = [];
+  final List<Map<String, dynamic>> _localRuleValidationsStore = [];
 
   /// Returns the active SupabaseClient if initialized
   SupabaseClient? get client => _client;
@@ -91,6 +112,13 @@ class SupabaseService {
 
     debugPrint('🔐 [CIDAN OTP] Generated OTP for $cleanEmail: $otp');
 
+    // Always store in memory for reliable instant/offline verification fallback
+    _localOtpStore[cleanEmail] = _OtpEntry(
+      otp: otp,
+      expiresAt: expiresAt,
+      isVerified: false,
+    );
+
     // 1. Store in Supabase if connected
     if (isConnected && _client != null) {
       try {
@@ -112,12 +140,6 @@ class SupabaseService {
         debugPrint('⚠️ [CIDAN Supabase] Error saving OTP to database: $e');
       }
     } else {
-      // Store in memory for instant local verification
-      _localOtpStore[cleanEmail] = _OtpEntry(
-        otp: otp,
-        expiresAt: expiresAt,
-        isVerified: false,
-      );
       _localHistoryStore.insert(0, {
         'id': 'local-${DateTime.now().millisecondsSinceEpoch}',
         'user_email': cleanEmail,
@@ -136,7 +158,10 @@ class SupabaseService {
         emailSent = await _sendEmailViaSmtp(
           recipientEmail: cleanEmail,
           otpCode: otp,
-        );
+        ).timeout(const Duration(seconds: 5), onTimeout: () {
+          debugPrint('⚠️ [CIDAN SMTP] Timeout connecting to SMTP server');
+          return false;
+        });
       } catch (e) {
         smtpError = e.toString();
         debugPrint('⚠️ [CIDAN SMTP] Failed to send email: $e');
@@ -310,7 +335,9 @@ class SupabaseService {
             .eq('user_email', cleanEmail)
             .order('created_at', ascending: false);
 
-        return response.cast<Map<String, dynamic>>();
+        if (response.isNotEmpty) {
+          return response.cast<Map<String, dynamic>>();
+        }
       } catch (e) {
         debugPrint('⚠️ [CIDAN Supabase] Error fetching user history: $e');
       }
@@ -512,6 +539,582 @@ class SupabaseService {
         .toList();
 
     return filtered;
+  }
+
+  // =========================================================================
+  // 5. MILESTONE 1: BANKS, INTEGRATIONS, AND VERIFICATION
+  // =========================================================================
+
+  /// Generate a cryptographically valid RFC 4122 v4 UUID string
+  static String generateUuid() {
+    final rng = Random.secure();
+    String hex(int length) {
+      final bytes = List<int>.generate(length, (_) => rng.nextInt(16));
+      return bytes.map((b) => b.toRadixString(16)).join();
+    }
+    return '${hex(8)}-${hex(4)}-4${hex(3)}-a${hex(3)}-${hex(12)}';
+  }
+
+  /// Register or retrieve an existing bank entry
+  Future<BankModel> getOrCreateBank({
+    required String name,
+    required String bankCode,
+  }) async {
+    final cleanCode = bankCode.trim().toUpperCase();
+    final cleanName = name.trim();
+
+    if (isConnected && _client != null) {
+      try {
+        final existing = await _client!
+            .from(SupabaseConfig.tableBanks)
+            .select()
+            .eq('bank_code', cleanCode)
+            .limit(1);
+
+        if (existing.isNotEmpty) {
+          return BankModel.fromJson(existing.first);
+        }
+
+        final inserted = await _client!
+            .from(SupabaseConfig.tableBanks)
+            .insert({
+              'name': cleanName,
+              'bank_code': cleanCode,
+            })
+            .select()
+            .single();
+
+        return BankModel.fromJson(inserted);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error with bank record: $e');
+      }
+    }
+
+    final localIdx = _localBanksStore.indexWhere(
+      (b) => b['bank_code'] == cleanCode,
+    );
+    if (localIdx >= 0) {
+      return BankModel.fromJson(_localBanksStore[localIdx]);
+    }
+
+    final newBank = {
+      'id': generateUuid(),
+      'name': cleanName,
+      'bank_code': cleanCode,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    _localBanksStore.add(newBank);
+    return BankModel.fromJson(newBank);
+  }
+
+  /// Save or update a bank integration configuration
+  Future<void> saveBankIntegration(BankIntegrationModel integration) async {
+    final json = integration.toJson();
+    final idx = _localBankIntegrationsStore.indexWhere((e) => e['id'] == integration.id);
+    if (idx >= 0) {
+      _localBankIntegrationsStore[idx] = json;
+    } else {
+      _localBankIntegrationsStore.add(json);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableBankIntegrations).upsert(json);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving bank integration: $e');
+      }
+    }
+  }
+
+  /// Retrieve all integrations configured for a bank
+  Future<List<BankIntegrationModel>> getBankIntegrations(String bankId) async {
+    if (isConnected && _client != null) {
+      try {
+        final List<dynamic> response = await _client!
+            .from(SupabaseConfig.tableBankIntegrations)
+            .select()
+            .eq('bank_id', bankId)
+            .order('created_at', ascending: false);
+
+        if (response.isNotEmpty) {
+          final List<BankIntegrationModel> results = [];
+          for (final row in response) {
+            final intg = BankIntegrationModel.fromJson(row);
+            final sources = await getIntegrationSources(intg.id);
+            results.add(intg.copyWith(sources: sources));
+          }
+          return results;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error loading bank integrations: $e');
+      }
+    }
+
+    final localMatches = _localBankIntegrationsStore
+        .where((e) => e['bank_id'] == bankId)
+        .map((e) {
+          final intg = BankIntegrationModel.fromJson(e);
+          final sources = _localIntegrationSourcesStore
+              .where((s) => s['integration_id'] == intg.id)
+              .map((s) => IntegrationSourceModel.fromJson(s))
+              .toList();
+          return intg.copyWith(sources: sources);
+        })
+        .toList();
+
+    return localMatches;
+  }
+
+  /// Save an individual integration source (e.g. Oracle, MongoDB, REST)
+  Future<void> saveIntegrationSource(IntegrationSourceModel source) async {
+    final json = source.toJson();
+    final idx = _localIntegrationSourcesStore.indexWhere((e) => e['id'] == source.id);
+    if (idx >= 0) {
+      _localIntegrationSourcesStore[idx] = json;
+    } else {
+      _localIntegrationSourcesStore.add(json);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableIntegrationSources).upsert(json);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving integration source: $e');
+      }
+    }
+  }
+
+  /// Fetch sources belonging to an integration
+  Future<List<IntegrationSourceModel>> getIntegrationSources(String integrationId) async {
+    if (isConnected && _client != null) {
+      try {
+        final List<dynamic> response = await _client!
+            .from(SupabaseConfig.tableIntegrationSources)
+            .select()
+            .eq('integration_id', integrationId)
+            .order('created_at', ascending: false);
+
+        if (response.isNotEmpty) {
+          return response.map((e) => IntegrationSourceModel.fromJson(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error fetching integration sources: $e');
+      }
+    }
+
+    return _localIntegrationSourcesStore
+        .where((e) => e['integration_id'] == integrationId)
+        .map((e) => IntegrationSourceModel.fromJson(e))
+        .toList();
+  }
+
+  /// Record an audit entry for a connection verification test
+  Future<void> recordConnectionVerification(ConnectionVerificationResult result) async {
+    final json = result.toJson();
+    _localConnectionVerificationsStore.insert(0, json);
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableConnectionVerifications).insert(json);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error recording verification audit: $e');
+      }
+    }
+  }
+
+  /// Retrieve verification history for a source
+  Future<List<ConnectionVerificationResult>> getConnectionVerifications(String sourceId) async {
+    if (isConnected && _client != null) {
+      try {
+        final List<dynamic> response = await _client!
+            .from(SupabaseConfig.tableConnectionVerifications)
+            .select()
+            .eq('source_id', sourceId)
+            .order('verified_at', ascending: false);
+
+        return response
+            .map((e) => ConnectionVerificationResult.fromJson(e))
+            .toList();
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error reading verifications: $e');
+      }
+    }
+
+    return _localConnectionVerificationsStore
+        .where((e) => e['source_id'] == sourceId)
+        .map((e) => ConnectionVerificationResult.fromJson(e))
+        .toList();
+  }
+
+  // =========================================================================
+  // 6. MILESTONE 1: EXISTING RULES STORAGE
+  // =========================================================================
+
+  /// Save extracted rules into the existing rules catalog
+  Future<void> saveExistingRules(List<ExistingRuleModel> rules) async {
+    for (final rule in rules) {
+      final json = rule.toJson();
+      final idx = _localExistingRulesStore.indexWhere((e) => e['id'] == rule.id);
+      if (idx >= 0) {
+        _localExistingRulesStore[idx] = json;
+      } else {
+        _localExistingRulesStore.add(json);
+      }
+
+      if (isConnected && _client != null) {
+        try {
+          await _client!.from(SupabaseConfig.tableExistingRules).upsert(json);
+        } catch (e) {
+          debugPrint('⚠️ [CIDAN Supabase] Error saving existing rule: $e');
+        }
+      }
+    }
+  }
+
+  /// Retrieve cataloged existing rules
+  Future<List<ExistingRuleModel>> getExistingRules({
+    String? bankId,
+    String? sourceId,
+  }) async {
+    if (isConnected && _client != null) {
+      try {
+        var query = _client!.from(SupabaseConfig.tableExistingRules).select();
+        if (bankId != null) query = query.eq('bank_id', bankId);
+        if (sourceId != null) query = query.eq('source_id', sourceId);
+
+        final List<dynamic> response = await query.order('created_at', ascending: false);
+        if (response.isNotEmpty) {
+          return response.map((e) => ExistingRuleModel.fromJson(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying existing rules: $e');
+      }
+    }
+
+    Iterable<Map<String, dynamic>> list = _localExistingRulesStore;
+    if (bankId != null) {
+      list = list.where((e) => e['bank_id'] == bankId);
+    }
+    if (sourceId != null) {
+      list = list.where((e) => e['source_id'] == sourceId);
+    }
+    return list.map((e) => ExistingRuleModel.fromJson(e)).toList();
+  }
+
+  // =========================================================================
+  // 7. MILESTONE 1: REGULATORY CIRCULARS & DOCUMENTS
+  // =========================================================================
+
+  /// Save or record an uploaded regulatory circular document
+  Future<void> saveRegulatoryDocument(RegulatoryDocumentModel doc) async {
+    final json = doc.toJson();
+    final idx = _localRegulatoryDocumentsStore.indexWhere((e) => e['id'] == doc.id);
+    if (idx >= 0) {
+      _localRegulatoryDocumentsStore[idx] = json;
+    } else {
+      _localRegulatoryDocumentsStore.add(json);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableRegulatoryDocuments).upsert(json);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving regulatory doc: $e');
+      }
+    }
+  }
+
+  /// Retrieve circular documents
+  Future<List<RegulatoryDocumentModel>> getRegulatoryDocuments({String? bankId}) async {
+    if (isConnected && _client != null) {
+      try {
+        var query = _client!.from(SupabaseConfig.tableRegulatoryDocuments).select();
+        if (bankId != null) query = query.eq('bank_id', bankId);
+
+        final List<dynamic> response = await query.order('created_at', ascending: false);
+        if (response.isNotEmpty) {
+          return response.map((e) => RegulatoryDocumentModel.fromJson(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying regulatory docs: $e');
+      }
+    }
+
+    Iterable<Map<String, dynamic>> list = _localRegulatoryDocumentsStore;
+    if (bankId != null) {
+      list = list.where((e) => e['bank_id'] == bankId);
+    }
+    return list.map((e) => RegulatoryDocumentModel.fromJson(e)).toList();
+  }
+
+  /// Update the text extraction status of a circular
+  Future<void> updateRegulatoryDocumentStatus({
+    required String documentId,
+    required String status,
+    String? extractedText,
+  }) async {
+    final idx = _localRegulatoryDocumentsStore.indexWhere((e) => e['id'] == documentId);
+    if (idx >= 0) {
+      _localRegulatoryDocumentsStore[idx]['extraction_status'] = status;
+      if (extractedText != null) {
+        _localRegulatoryDocumentsStore[idx]['extracted_text'] = extractedText;
+      }
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableRegulatoryDocuments).update({
+          'extraction_status': status,
+          if (extractedText != null) 'extracted_text': extractedText,
+        }).eq('id', documentId);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error updating doc extraction status: $e');
+      }
+    }
+  }
+
+  // =========================================================================
+  // MILESTONE 2: RULE IR, DELTA ANALYSIS, MAPPINGS & VALIDATIONS
+  // =========================================================================
+
+  /// Save or upsert a Universal Rule IR record
+  Future<RuleIR> saveRuleIR(RuleIR rule) async {
+    final data = rule.toJson();
+    data['id'] ??= 'ir-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(9999)}';
+    data['created_at'] ??= DateTime.now().toUtc().toIso8601String();
+    data['updated_at'] = DateTime.now().toUtc().toIso8601String();
+
+    final existingIdx = _localRuleIRStore.indexWhere((r) => r['rule_id'] == rule.ruleId);
+    if (existingIdx >= 0) {
+      _localRuleIRStore[existingIdx] = data;
+    } else {
+      _localRuleIRStore.add(data);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableRuleIR).upsert(data, onConflict: 'rule_id');
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving Rule IR: $e');
+      }
+    }
+
+    return RuleIR.fromJson(data);
+  }
+
+  /// Retrieve active Universal Rule IR catalog for a bank
+  Future<List<RuleIR>> getRuleIRCatalog({
+    String? bankId,
+    String? category,
+  }) async {
+    if (isConnected && _client != null) {
+      try {
+        var query = _client!.from(SupabaseConfig.tableRuleIR).select();
+        if (bankId != null) query = query.eq('bank_id', bankId);
+        if (category != null) query = query.eq('category', category.toUpperCase());
+
+        final List<dynamic> response = await query.order('created_at', ascending: false);
+        if (response.isNotEmpty) {
+          return response.map((e) => RuleIR.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying Rule IR catalog: $e');
+      }
+    }
+
+    Iterable<Map<String, dynamic>> list = _localRuleIRStore;
+    if (bankId != null) list = list.where((r) => r['bank_id'] == bankId);
+    if (category != null) list = list.where((r) => r['category'] == category.toUpperCase());
+    return list.map((e) => RuleIR.fromJson(e)).toList();
+  }
+
+  /// Save a Delta Analysis session and all child rule deltas
+  Future<DeltaAnalysisResult> saveDeltaAnalysis(DeltaAnalysisResult result) async {
+    final analysisData = result.toJson();
+    analysisData['id'] = result.id.isNotEmpty
+        ? result.id
+        : 'delta-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(9999)}';
+    analysisData['created_at'] ??= DateTime.now().toUtc().toIso8601String();
+
+    _localDeltaAnalysesStore.removeWhere((a) => a['id'] == analysisData['id']);
+    _localDeltaAnalysesStore.insert(0, analysisData);
+
+    for (final delta in result.deltas) {
+      final deltaData = delta.toJson();
+      deltaData['analysis_id'] = analysisData['id'];
+      deltaData['created_at'] ??= DateTime.now().toUtc().toIso8601String();
+      _localRuleDeltasStore.removeWhere((d) => d['id'] == delta.id);
+      _localRuleDeltasStore.add(deltaData);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        final analysisPayload = Map<String, dynamic>.from(analysisData);
+        analysisPayload.remove('deltas');
+        await _client!.from(SupabaseConfig.tableDeltaAnalyses).insert(analysisPayload);
+
+        if (result.deltas.isNotEmpty) {
+          final deltasPayload = result.deltas.map((d) {
+            final map = d.toJson();
+            map['analysis_id'] = analysisData['id'];
+            return map;
+          }).toList();
+          await _client!.from(SupabaseConfig.tableRuleDeltas).insert(deltasPayload);
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving Delta Analysis to Supabase: $e');
+      }
+    }
+
+    return result;
+  }
+
+  /// Retrieve Delta Analysis sessions for a bank
+  Future<List<DeltaAnalysisResult>> getDeltaAnalyses({String? bankId}) async {
+    if (isConnected && _client != null) {
+      try {
+        var query = _client!.from(SupabaseConfig.tableDeltaAnalyses).select('*, rule_deltas(*)');
+        if (bankId != null) query = query.eq('bank_id', bankId);
+
+        final List<dynamic> response = await query.order('created_at', ascending: false);
+        if (response.isNotEmpty) {
+          return response.map((e) => DeltaAnalysisResult.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying Delta Analyses: $e');
+      }
+    }
+
+    Iterable<Map<String, dynamic>> list = _localDeltaAnalysesStore;
+    if (bankId != null) list = list.where((a) => a['bank_id'] == bankId);
+    return list.map((a) {
+      final analysisId = a['id'];
+      final deltas = _localRuleDeltasStore
+          .where((d) => d['analysis_id'] == analysisId)
+          .map((d) => RuleDelta.fromJson(d))
+          .toList();
+      final copy = Map<String, dynamic>.from(a);
+      copy['deltas'] = deltas.map((d) => d.toJson()).toList();
+      return DeltaAnalysisResult.fromJson(copy);
+    }).toList();
+  }
+
+  /// Retrieve Rule Deltas for a specific analysis session
+  Future<List<RuleDelta>> getRuleDeltas(String analysisId) async {
+    if (isConnected && _client != null) {
+      try {
+        final List<dynamic> response = await _client!
+            .from(SupabaseConfig.tableRuleDeltas)
+            .select()
+            .eq('analysis_id', analysisId)
+            .order('created_at', ascending: true);
+        if (response.isNotEmpty) {
+          return response.map((e) => RuleDelta.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying Rule Deltas: $e');
+      }
+    }
+
+    return _localRuleDeltasStore
+        .where((d) => d['analysis_id'] == analysisId)
+        .map((d) => RuleDelta.fromJson(d))
+        .toList();
+  }
+
+  /// Record human review decision in rule_mappings and update delta review status
+  Future<void> saveRuleMapping({
+    required String deltaId,
+    required String decision,
+    Map<String, dynamic>? customizedRuleIr,
+    String? userNotes,
+    String? bankId,
+    String? userEmail,
+  }) async {
+    final mappingRecord = {
+      'id': 'map-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(9999)}',
+      'delta_id': deltaId,
+      'bank_id': bankId,
+      'user_email': userEmail ?? 'auditor@apexbank.com',
+      'decision': decision,
+      'customized_rule_ir': customizedRuleIr,
+      'user_notes': userNotes,
+      'mapped_at': DateTime.now().toUtc().toIso8601String(),
+    };
+    _localRuleMappingsStore.add(mappingRecord);
+
+    // Update in local delta store
+    final deltaIdx = _localRuleDeltasStore.indexWhere((d) => d['id'] == deltaId);
+    if (deltaIdx >= 0) {
+      final statusMap = {
+        'ACCEPTED': 'ACCEPTED',
+        'MODIFIED': 'MODIFIED',
+        'REJECTED': 'REJECTED',
+        'MANUAL_REVIEW': 'NEEDS_REVIEW',
+      };
+      _localRuleDeltasStore[deltaIdx]['review_status'] = statusMap[decision] ?? 'PENDING';
+      if (customizedRuleIr != null) {
+        _localRuleDeltasStore[deltaIdx]['proposed_change'] = customizedRuleIr;
+      }
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableRuleMappings).insert(mappingRecord);
+        await _client!.from(SupabaseConfig.tableRuleDeltas).update({
+          'review_status': decision == 'MANUAL_REVIEW' ? 'NEEDS_REVIEW' : decision,
+          if (customizedRuleIr != null) 'proposed_change': customizedRuleIr,
+        }).eq('id', deltaId);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving Rule Mapping: $e');
+      }
+    }
+  }
+
+  /// Save validation findings for rules
+  Future<void> saveValidationFindings(List<ValidationFinding> findings) async {
+    for (final f in findings) {
+      _localRuleValidationsStore.add(f.toJson());
+    }
+
+    if (isConnected && _client != null && findings.isNotEmpty) {
+      try {
+        await _client!.from(SupabaseConfig.tableRuleValidations).insert(
+              findings.map((f) => f.toJson()).toList(),
+            );
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving validation findings: $e');
+      }
+    }
+  }
+
+  /// Retrieve validation findings
+  Future<List<ValidationFinding>> getValidationFindings({
+    String? ruleIrId,
+    String? deltaId,
+    String? bankId,
+  }) async {
+    if (isConnected && _client != null) {
+      try {
+        var query = _client!.from(SupabaseConfig.tableRuleValidations).select();
+        if (ruleIrId != null) query = query.eq('rule_ir_id', ruleIrId);
+        if (deltaId != null) query = query.eq('delta_id', deltaId);
+        if (bankId != null) query = query.eq('bank_id', bankId);
+
+        final List<dynamic> response = await query.order('created_at', ascending: false);
+        if (response.isNotEmpty) {
+          return response.map((e) => ValidationFinding.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error querying validation findings: $e');
+      }
+    }
+
+    Iterable<Map<String, dynamic>> list = _localRuleValidationsStore;
+    if (ruleIrId != null) list = list.where((f) => f['rule_ir_id'] == ruleIrId);
+    if (deltaId != null) list = list.where((f) => f['delta_id'] == deltaId);
+    if (bankId != null) list = list.where((f) => f['bank_id'] == bankId);
+    return list.map((e) => ValidationFinding.fromJson(e)).toList();
   }
 }
 

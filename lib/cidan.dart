@@ -12,6 +12,26 @@ export 'features/compliance/models/compliance_report_model.dart'
         ReportSummary,
         ReportMetrics,
         DocumentSource;
+export 'features/compliance/models/bank_integration_model.dart'
+    show
+        BankModel,
+        BankIntegrationModel,
+        IntegrationSourceModel,
+        ConnectionVerificationResult;
+export 'features/compliance/models/existing_rule_model.dart'
+    show ExistingRuleModel;
+export 'features/compliance/models/regulatory_document_model.dart'
+    show RegulatoryDocumentModel;
+export 'features/compliance/models/rule_ir_model.dart'
+    show RuleIR, ConditionNode, ConditionTree, ActionNode;
+export 'features/compliance/models/rule_delta_model.dart'
+    show RuleDelta, DeltaAnalysisResult, DiffItem;
+export 'features/compliance/models/rule_validation_model.dart'
+    show ValidationFinding;
+export 'features/compliance/screens/rule_mapping_studio_screen.dart'
+    show RuleMappingStudioScreen;
+export 'features/compliance/services/integration_adapter_interface.dart'
+    show IntegrationAdapter, IntegrationAdapterFactory;
 
 /// Entry point class for the CIDAN Regulatory Compliance AI Suite.
 ///

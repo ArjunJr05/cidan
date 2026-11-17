@@ -4,6 +4,7 @@ import '../models/compliance_report_model.dart';
 import '../services/cidan_api_service.dart';
 import '../services/report_file_saver.dart';
 import 'upload_document_screen.dart';
+import 'rule_mapping_studio_screen.dart';
 
 class ComplianceDashboardScreen extends StatefulWidget {
   final ComplianceReportModel report;
@@ -243,6 +244,46 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Rule Mapping Studio Action Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const RuleMappingStudioScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.compare_arrows_rounded, size: 16, color: Color(0xFF6366F1)),
+                    SizedBox(width: 6),
+                    Text(
+                      'Mapping Studio',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -516,6 +557,46 @@ class _ComplianceDashboardScreenState extends State<ComplianceDashboardScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Rule Mapping Studio Action Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const RuleMappingStudioScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.compare_arrows_rounded, size: 16, color: Color(0xFF6366F1)),
+                    SizedBox(width: 6),
+                    Text(
+                      'Mapping Studio',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

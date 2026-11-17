@@ -54,4 +54,15 @@ class SupabaseConfig {
   static const String tableOtps = 'auth_otps';
   static const String tableUserHistory = 'user_history';
   static const String tableComplianceReports = 'compliance_reports';
+  static const String tableBanks = 'banks';
+  static const String tableBankIntegrations = 'bank_integrations';
+  static const String tableIntegrationSources = 'integration_sources';
+  static const String tableConnectionVerifications = 'connection_verifications';
+  static const String tableExistingRules = 'existing_rules';
+  static const String tableRegulatoryDocuments = 'regulatory_documents';
+  static const String tableRuleIR = 'rule_ir';
+  static const String tableDeltaAnalyses = 'delta_analyses';
+  static const String tableRuleDeltas = 'rule_deltas';
+  static const String tableRuleMappings = 'rule_mappings';
+  static const String tableRuleValidations = 'rule_validations';
 }

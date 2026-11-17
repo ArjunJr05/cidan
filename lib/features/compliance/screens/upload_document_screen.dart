@@ -6,10 +6,16 @@ import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/screens/login_screen.dart';
+import '../models/bank_integration_model.dart';
 import '../models/compliance_report_model.dart';
+import '../models/existing_rule_model.dart';
+import '../models/regulatory_document_model.dart';
 import '../services/cidan_api_service.dart';
+import '../widgets/circular_metadata_dialog.dart';
+import '../widgets/connect_cidan_dialog.dart';
 import '../widgets/dashed_border_painter.dart';
 import 'compliance_dashboard_screen.dart';
+import 'rule_mapping_studio_screen.dart';
 
 enum UploadProcessStep { initial, completed }
 
@@ -35,25 +41,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   // Existing Rules state
   final List<Map<String, String>> _existingRulesFiles = [];
   bool _existingRulesExpanded = true;
-  int _existingRulesInputMode = 0; // 0 = Upload Document, 1 = Endpoint (URL)
-  final List<TextEditingController> _endpointControllers = [
-    TextEditingController(text: ''),
-  ];
+  int _existingRulesInputMode = 0; // 0 = Upload Existing Rules (Option A), 1 = Connect with CIDAN (Option B)
+  final List<IntegrationSourceModel> _verifiedSources = [];
 
   // New Rule Input state
   bool _newRuleExpanded = true;
   final List<Map<String, String>> _newRuleFiles = [];
   String _newCircularFileName = '';
+  RegulatoryDocumentModel? _circularMetadata;
 
-  bool get _hasExistingRulesInput {
-    if (_existingRulesInputMode == 1) {
-      return _endpointControllers.any((c) => c.text.trim().isNotEmpty) ||
-          _existingRulesFiles.isNotEmpty;
-    } else {
-      return _existingRulesFiles.isNotEmpty ||
-          _endpointControllers.any((c) => c.text.trim().isNotEmpty);
-    }
-  }
+  bool get _hasExistingRulesInput =>
+      _existingRulesFiles.isNotEmpty || _verifiedSources.isNotEmpty;
 
   bool get _hasNewRuleInput =>
       _newRuleFiles.isNotEmpty || _newCircularFileName.isNotEmpty;
@@ -78,6 +76,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   // Recent Regulatory Filings History
   List<Map<String, dynamic>> _recentReports = [];
   bool _isLoadingReports = false;
+  String _currentBankId = '00000000-0000-0000-0000-000000000001';
 
   final List<String> _videoStatusSteps = const [
     'Uploading circular...',
@@ -97,6 +96,21 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       _fileSize = widget.initialFileSize!;
     }
     _loadRecentReports();
+    _initBank();
+  }
+
+  Future<void> _initBank() async {
+    try {
+      final bank = await SupabaseService().getOrCreateBank(
+        name: 'Apex Banking Corporation',
+        bankCode: 'APEX-01',
+      );
+      if (mounted) {
+        setState(() {
+          _currentBankId = bank.id;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadRecentReports() async {
@@ -118,9 +132,6 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
   @override
   void dispose() {
-    for (final controller in _endpointControllers) {
-      controller.dispose();
-    }
     _videoController?.removeListener(_handleVideoTick);
     _videoController?.dispose();
     super.dispose();
@@ -132,12 +143,22 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.pdf')) {
       return Icons.picture_as_pdf_rounded;
+    } else if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+      return Icons.table_chart_rounded;
+    } else if (lower.endsWith('.json') ||
+        lower.endsWith('.xml') ||
+        lower.endsWith('.yaml') ||
+        lower.endsWith('.yml') ||
+        lower.endsWith('.sql')) {
+      return Icons.code_rounded;
+    } else if (lower.endsWith('.docx') || lower.endsWith('.doc')) {
+      return Icons.description_rounded;
     } else if (lower.endsWith('.png') ||
         lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg')) {
       return Icons.image_rounded;
     } else {
-      return Icons.description_rounded;
+      return Icons.insert_drive_file_rounded;
     }
   }
 
@@ -145,20 +166,30 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.pdf')) {
       return const Color(0xFFEF4444);
+    } else if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+      return const Color(0xFF10B981);
+    } else if (lower.endsWith('.docx') || lower.endsWith('.doc')) {
+      return const Color(0xFF2563EB);
+    } else if (lower.endsWith('.json') ||
+        lower.endsWith('.xml') ||
+        lower.endsWith('.yaml') ||
+        lower.endsWith('.yml') ||
+        lower.endsWith('.sql')) {
+      return const Color(0xFF4F46E5);
     } else if (lower.endsWith('.png') ||
         lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg')) {
-      return const Color(0xFF10B981);
+      return const Color(0xFFF59E0B);
     } else {
-      return const Color(0xFF4F46E5);
+      return const Color(0xFF64748B);
     }
   }
 
-  Future<dynamic> _pickFilesCompat() async {
+  Future<dynamic> _pickFilesCompat({List<String>? allowedExtensions}) async {
     try {
       return await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [
+        allowedExtensions: allowedExtensions ?? [
           'pdf',
           'png',
           'jpg',
@@ -248,7 +279,24 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     _isPickingFile = true;
     try {
-      final dynamic result = await _pickFilesCompat();
+      final dynamic result = await _pickFilesCompat(
+        allowedExtensions: [
+          'pdf',
+          'docx',
+          'doc',
+          'xlsx',
+          'xls',
+          'json',
+          'xml',
+          'sql',
+          'yaml',
+          'yml',
+          'txt',
+          'png',
+          'jpg',
+          'jpeg',
+        ],
+      );
       if (result == null || !mounted) return;
 
       final remainingSlots = _maxAllowedFiles - _existingRulesFiles.length;
@@ -267,6 +315,26 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             _fileSize = newFiles.first['size'] ?? '1.5 MB';
           }
         });
+
+        // Store extracted rule reference into Supabase
+        final rules = newFiles.map((f) {
+          final n = f['name'] ?? 'rule.pdf';
+          final ext = n.contains('.') ? n.split('.').last.toUpperCase() : 'PDF';
+          return ExistingRuleModel(
+            id: SupabaseService.generateUuid(),
+            bankId: _currentBankId,
+            sourceType: 'FILE',
+            ruleCode: 'RULE-$ext-${n.hashCode.abs() % 10000}',
+            ruleTitle: n,
+            ruleContent: 'Bank internal policy constraints extracted from $n',
+            fileFormat: ext,
+            filePath: n,
+            version: 1,
+            metadata: {'size': f['size'] ?? '1.0 MB'},
+            createdAt: DateTime.now(),
+          );
+        }).toList();
+        SupabaseService().saveExistingRules(rules);
       }
 
       int totalCount = newFiles.length;
@@ -318,7 +386,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
     _isPickingFile = true;
     try {
-      final dynamic result = await _pickFilesCompat();
+      final dynamic result = await _pickFilesCompat(
+        allowedExtensions: [
+          'pdf',
+          'docx',
+          'doc',
+          'png',
+          'jpg',
+          'jpeg',
+          'txt',
+        ],
+      );
       if (result == null || !mounted) return;
 
       final remainingSlots = _maxAllowedFiles - _newRuleFiles.length;
@@ -336,6 +414,31 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
           if (_fileName.isEmpty) {
             _fileName = _newRuleFiles.first['name'] ?? '';
             _fileSize = _newRuleFiles.first['size'] ?? '';
+          }
+          if (_circularMetadata == null) {
+            final fName =
+                _newRuleFiles.first['name'] ?? 'regulatory_document.pdf';
+            final fmt = fName.contains('.')
+                ? fName.split('.').last.toUpperCase()
+                : 'PDF';
+            _circularMetadata = RegulatoryDocumentModel(
+              id: SupabaseService.generateUuid(),
+              bankId: _currentBankId,
+              documentName: fName,
+              issuingAuthority: 'RBI',
+              circularNumber:
+                  'RBI/2026-27/CIRCULAR-${DateTime.now().millisecondsSinceEpoch % 1000}',
+              effectiveDate: DateTime.now(),
+              complianceDeadline:
+                  DateTime.now().add(const Duration(days: 90)),
+              category: 'KYC & Anti-Money Laundering',
+              fileFormat: fmt,
+              fileSizeBytes: 2100000,
+              version: 1,
+              extractionStatus: 'PENDING',
+              createdAt: DateTime.now(),
+            );
+            SupabaseService().saveRegulatoryDocument(_circularMetadata!);
           }
         });
       }
@@ -376,14 +479,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       _newCircularFileName = '';
       _existingRulesFiles.clear();
       _newRuleFiles.clear();
+      _verifiedSources.clear();
+      _circularMetadata = null;
       _analysisReport = null;
-      for (final controller in _endpointControllers) {
-        controller.clear();
-      }
-      while (_endpointControllers.length > 1) {
-        final c = _endpointControllers.removeLast();
-        c.dispose();
-      }
       _existingRulesInputMode = 0;
       _existingRulesExpanded = true;
       _newRuleExpanded = true;
@@ -412,11 +510,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     } else if (_existingRulesFiles.isNotEmpty) {
       _fileName = _existingRulesFiles.first['name'] ?? 'existing_rule.pdf';
       _fileSize = _existingRulesFiles.first['size'] ?? '1.5 MB';
-    } else if (_endpointControllers.isNotEmpty &&
-        _endpointControllers.first.text.trim().isNotEmpty) {
-      _fileName =
-          'Endpoint_Rule_${DateTime.now().millisecondsSinceEpoch % 10000}.pdf';
-      _fileSize = '1.8 MB';
+    } else if (_verifiedSources.isNotEmpty) {
+      _fileName = '${_verifiedSources.first.sourceType}_Rules_Catalog.json';
+      _fileSize = '1.2 MB';
     } else {
       _fileName = 'TNext-SE-2026-J_2625-Rules.pdf';
       _fileSize = '2.4 MB';
@@ -1275,7 +1371,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Upload current rules, policies, or provide an endpoint URL',
+                          'Upload internal policies or connect via CIDAN gateway',
                           style: TextStyle(
                             fontFamily: 'packages/cidan/Poppins',
                             fontSize: 11.5,
@@ -1301,7 +1397,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       _hasExistingRulesInput
                           ? (_existingRulesFiles.isNotEmpty
                               ? '✓ ${_existingRulesFiles.length} file(s)'
-                              : '✓ Endpoint set')
+                              : '✓ ${_verifiedSources.length} source(s)')
                           : 'Required',
                       style: TextStyle(
                         fontFamily: 'packages/cidan/Poppins',
@@ -1351,13 +1447,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 9),
                               decoration: BoxDecoration(
                                 color: _existingRulesInputMode == 0
-                                    ? const Color(0xFF4F46E5)
+                                    ? const Color(0xFF6366F1)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: _existingRulesInputMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF4F46E5)
+                                          color: const Color(0xFF6366F1)
                                               .withAlpha(50),
                                           blurRadius: 6,
                                           offset: const Offset(0, 2),
@@ -1367,24 +1463,28 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.description_outlined,
-                                    size: 16,
+                                    Icons.upload_file_rounded,
+                                    size: 15,
                                     color: _existingRulesInputMode == 0
                                         ? Colors.white
                                         : const Color(0xFF64748B),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Upload Document',
-                                    style: TextStyle(
-                                      fontFamily: 'packages/cidan/Poppins',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: _existingRulesInputMode == 0
-                                          ? Colors.white
-                                          : const Color(0xFF64748B),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'Upload Rules',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: _existingRulesInputMode == 0
+                                            ? Colors.white
+                                            : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1392,7 +1492,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             ),
                           ),
                         ),
-                        // Tab 1: Endpoint (URL)
+                        // Tab 1: Option B: Connect with CIDAN
                         Expanded(
                           child: InkWell(
                             onTap: () =>
@@ -1402,13 +1502,13 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 9),
                               decoration: BoxDecoration(
                                 color: _existingRulesInputMode == 1
-                                    ? const Color(0xFF4F46E5)
+                                    ? const Color(0xFF6366F1)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: _existingRulesInputMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF4F46E5)
+                                          color: const Color(0xFF6366F1)
                                               .withAlpha(50),
                                           blurRadius: 6,
                                           offset: const Offset(0, 2),
@@ -1418,24 +1518,28 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.link_rounded,
-                                    size: 16,
+                                    Icons.account_balance_rounded,
+                                    size: 15,
                                     color: _existingRulesInputMode == 1
                                         ? Colors.white
                                         : const Color(0xFF64748B),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Endpoint (URL)',
-                                    style: TextStyle(
-                                      fontFamily: 'packages/cidan/Poppins',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: _existingRulesInputMode == 1
-                                          ? Colors.white
-                                          : const Color(0xFF64748B),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'Connect CIDAN',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: _existingRulesInputMode == 1
+                                            ? Colors.white
+                                            : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1565,7 +1669,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Supported: PDF, PNG, JPG, DOCX, DOC, TXT (Max 10 files, 50 MB each)',
+                      'Supported: PDF, DOCX, XLSX, JSON, XML, SQL, YAML (Max 10 files, 50 MB each)',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'packages/cidan/Poppins',
@@ -1703,123 +1807,233 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       ),
                     ],
                   ] else ...[
-                    // Mode 1: Endpoint URL fields
-                    ..._endpointControllers.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final controller = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: controller,
-                                onChanged: (_) => setState(() {}),
-                                style: const TextStyle(
-                                  fontFamily: 'packages/cidan/Poppins',
-                                  fontSize: 13,
-                                  color: Color(0xFF0F172A),
+                    // Option B: Connect with CIDAN
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFBFE),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6366F1),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  prefixIcon: const Icon(
-                                    Icons.link_rounded,
-                                    size: 18,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                  hintText:
-                                      'Enter endpoint URL (e.g., https://api.bank.gov.in/rules)',
-                                  hintStyle: const TextStyle(
-                                    fontFamily: 'packages/cidan/Poppins',
-                                    fontSize: 12,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF4F46E5),
-                                      width: 1.4,
-                                    ),
-                                  ),
+                                child: const Icon(
+                                  Icons.account_balance_rounded,
+                                  color: Colors.white,
+                                  size: 18,
                                 ),
                               ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Enterprise Integration Gateway',
+                                      style: TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Connect to Oracle, Mongo, Postgres, or APIs via CIDAN proxy',
+                                      style: TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 11,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => ConnectCidanDialog(
+                                  userEmail: widget.email,
+                                  onSourceVerified: (integration, source) {
+                                    setState(() {
+                                      _verifiedSources.removeWhere(
+                                        (s) =>
+                                            s.id == source.id ||
+                                            s.sourceType == source.sourceType,
+                                      );
+                                      _verifiedSources.add(source);
+                                    });
+                                  },
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6366F1),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 11,
+                              ),
+                              elevation: 0,
                             ),
-                            if (_endpointControllers.length > 1) ...[
-                              const SizedBox(width: 6),
+                            icon: const Icon(Icons.add_link_rounded, size: 18),
+                            label: const Text(
+                              'Connect New Integration Source',
+                              style: TextStyle(
+                                fontFamily: 'packages/cidan/Poppins',
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (_verifiedSources.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Verified Active Sources (${_verifiedSources.length})',
+                            style: const TextStyle(
+                              fontFamily: 'packages/cidan/Poppins',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => setState(() => _verifiedSources.clear()),
+                            child: const Text(
+                              'Clear sources',
+                              style: TextStyle(
+                                fontFamily: 'packages/cidan/Poppins',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFEF4444),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ..._verifiedSources.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final src = entry.value;
+                        final isDb = src.sourceType != 'REST_API' &&
+                            src.sourceType != 'GRAPHQL';
+                        final detail = isDb
+                            ? '${src.configMetadata["host"] ?? "db"}:${src.configMetadata["port"] ?? ""}'
+                            : (src.configMetadata["base_url"] ?? "API Endpoint");
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isDb
+                                    ? Icons.storage_rounded
+                                    : Icons.http_rounded,
+                                size: 18,
+                                color: const Color(0xFF15803D),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          src.sourceType,
+                                          style: const TextStyle(
+                                            fontFamily: 'packages/cidan/Poppins',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 1.5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFDCFCE7),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: const Text(
+                                            '✓ Verified',
+                                            style: TextStyle(
+                                              fontFamily:
+                                                  'packages/cidan/Poppins',
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF15803D),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      detail,
+                                      style: const TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 11,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
                               IconButton(
                                 icon: const Icon(
                                   Icons.close_rounded,
-                                  size: 18,
-                                  color: Color(0xFFEF4444),
+                                  size: 16,
+                                  color: Color(0xFF64748B),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    controller.dispose();
-                                    _endpointControllers.removeAt(idx);
+                                    _verifiedSources.removeAt(idx);
                                   });
                                 },
                               ),
                             ],
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _endpointControllers.add(TextEditingController());
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF4F46E5),
-                          side: const BorderSide(
-                            color: Color(0xFF4F46E5),
-                            width: 1.2,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 9,
-                          ),
-                          backgroundColor: Colors.white,
-                        ),
-                        icon: const Icon(
-                          Icons.add_rounded,
-                          size: 16,
-                          color: Color(0xFF4F46E5),
-                        ),
-                        label: const Text(
-                          'Add Another Endpoint',
-                          style: TextStyle(
-                            fontFamily: 'packages/cidan/Poppins',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                        );
+                      }),
+                    ],
                   ],
                 ],
               ),
@@ -2187,122 +2401,125 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         ),
                       ),
                     ),
-                  ] else ...[
-                    // Mode 1: Endpoint URL fields
-                    ..._endpointControllers.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final controller = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: controller,
-                                onChanged: (_) => setState(() {}),
-                                style: const TextStyle(
-                                  fontFamily: 'packages/cidan/Poppins',
-                                  fontSize: 13,
-                                  color: Color(0xFF0F172A),
+                  ],
+
+                  // Regulatory Circular Metadata Summary Card
+                  if (_newRuleFiles.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
                                 ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  prefixIcon: const Icon(
-                                    Icons.link_rounded,
-                                    size: 18,
-                                    color: Color(0xFF94A3B8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6366F1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  _circularMetadata?.issuingAuthority ?? 'RBI',
+                                  style: const TextStyle(
+                                    fontFamily: 'packages/cidan/Poppins',
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
-                                  hintText:
-                                      'Enter endpoint URL (e.g., https://api.bank.gov.in/rules)',
-                                  hintStyle: const TextStyle(
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _circularMetadata?.circularNumber ??
+                                      'Regulatory Circular',
+                                  style: const TextStyle(
                                     fontFamily: 'packages/cidan/Poppins',
                                     fontSize: 12,
-                                    color: Color(0xFF94A3B8),
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
                                   ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF4F46E5),
-                                      width: 1.4,
-                                    ),
-                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                            if (_endpointControllers.length > 1) ...[
-                              const SizedBox(width: 6),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  size: 18,
-                                  color: Color(0xFFEF4444),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    controller.dispose();
-                                    _endpointControllers.removeAt(idx);
-                                  });
+                              InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => CircularMetadataDialog(
+                                      fileName: _newRuleFiles.first['name'] ??
+                                          'regulatory_circular.pdf',
+                                      fileSizeBytes: 2100000,
+                                      initialModel: _circularMetadata,
+                                      onSave: (saved) {
+                                        setState(() => _circularMetadata = saved);
+                                        SupabaseService()
+                                            .saveRegulatoryDocument(saved);
+                                      },
+                                    ),
+                                  );
                                 },
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.edit_rounded,
+                                        size: 14, color: Color(0xFF4F46E5)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Edit Metadata',
+                                      style: TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF4F46E5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _endpointControllers.add(TextEditingController());
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF4F46E5),
-                          side: const BorderSide(
-                            color: Color(0xFF4F46E5),
-                            width: 1.2,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                'Domain: ${_circularMetadata?.category ?? "KYC & AML"}',
+                                style: const TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              Text(
+                                'Deadline: ${_circularMetadata?.complianceDeadline != null ? "${_circularMetadata!.complianceDeadline!.year}-${_circularMetadata!.complianceDeadline!.month.toString().padLeft(2, "0")}-${_circularMetadata!.complianceDeadline!.day.toString().padLeft(2, "0")}" : "90 days"}',
+                                style: const TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                              Text(
+                                'Version: v${_circularMetadata?.version ?? 1}.0',
+                                style: const TextStyle(
+                                  fontFamily: 'packages/cidan/Poppins',
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 9,
-                          ),
-                          backgroundColor: Colors.white,
-                        ),
-                        icon: const Icon(
-                          Icons.add_rounded,
-                          size: 16,
-                          color: Color(0xFF4F46E5),
-                        ),
-                        label: const Text(
-                          'Add Another Endpoint',
-                          style: TextStyle(
-                            fontFamily: 'packages/cidan/Poppins',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
@@ -2465,6 +2682,62 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
             ),
           ),
 
+          // Middle / Right: Rule Mapping Studio Pill Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => RuleMappingStudioScreen(
+                      bankId: _currentBankId,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6.5,
+                ),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withAlpha(16),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.compare_arrows_rounded,
+                      size: 16,
+                      color: Color(0xFF6366F1),
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'Rule Mapping Studio',
+                      style: TextStyle(
+                        fontFamily: 'packages/cidan/Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           // Right: Sign Out Button
           Material(
             color: Colors.transparent,
@@ -2526,53 +2799,58 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.history_edu_rounded,
-                    size: 16,
-                    color: Color(0xFF4F46E5),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Recent Regulatory History',
-                  style: TextStyle(
-                    fontFamily: 'packages/cidan/Poppins',
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                if (_recentReports.isNotEmpty) ...[
-                  const SizedBox(width: 6),
+            Expanded(
+              child: Row(
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 1.5,
-                    ),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0E7FF),
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(
+                      Icons.history_edu_rounded,
+                      size: 16,
+                      color: Color(0xFF6366F1),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Flexible(
                     child: Text(
-                      '${_recentReports.length}',
-                      style: const TextStyle(
+                      'Recent Regulatory History',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                         fontFamily: 'packages/cidan/Poppins',
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF4338CA),
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                   ),
+                  if (_recentReports.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E7FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${_recentReports.length}',
+                        style: const TextStyle(
+                          fontFamily: 'packages/cidan/Poppins',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF6366F1),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
             if (_recentReports.isNotEmpty)
               TextButton(
@@ -2591,14 +2869,14 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         fontFamily: 'packages/cidan/Poppins',
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF4F46E5),
+                        color: Color(0xFF6366F1),
                       ),
                     ),
                     SizedBox(width: 2),
                     Icon(
                       Icons.arrow_forward_rounded,
                       size: 14,
-                      color: Color(0xFF4F46E5),
+                      color: Color(0xFF6366F1),
                     ),
                   ],
                 ),
@@ -2899,12 +3177,12 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 height: btnHeight,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF4338CA), Color(0xFF4F46E5)],
+                    colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4F46E5).withAlpha(70),
+                      color: const Color(0xFF6366F1).withAlpha(70),
                       blurRadius: 16,
                       offset: const Offset(0, 5),
                     ),
@@ -2922,13 +3200,16 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Text(
-                        'View Results',
-                        style: TextStyle(
-                          fontFamily: 'packages/cidan/Poppins',
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      Flexible(
+                        child: Text(
+                          'View Results',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'packages/cidan/Poppins',
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       SizedBox(width: 6),
@@ -2950,9 +3231,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 child: OutlinedButton(
                   onPressed: _handleRemoveFile,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF4F46E5),
+                    foregroundColor: const Color(0xFF6366F1),
                     side: const BorderSide(
-                      color: Color(0xFF4F46E5),
+                      color: Color(0xFF6366F1),
                       width: 1.3,
                     ),
                     shape: RoundedRectangleBorder(
