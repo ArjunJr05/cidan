@@ -7,6 +7,7 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/screens/login_screen.dart';
 import '../models/bank_integration_model.dart';
+import '../models/user_saved_integration_model.dart';
 import '../models/compliance_report_model.dart';
 import '../models/existing_rule_model.dart';
 import '../models/regulatory_document_model.dart';
@@ -41,8 +42,14 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   // Existing Rules state
   final List<Map<String, String>> _existingRulesFiles = [];
   bool _existingRulesExpanded = true;
-  int _existingRulesInputMode = 0; // 0 = Upload Existing Rules (Option A), 1 = Connect with CIDAN (Option B)
+  int _existingRulesInputMode =
+      0; // 0 = Upload Existing Rules (Option A), 1 = Connect with CIDAN (Option B)
   final List<IntegrationSourceModel> _verifiedSources = [];
+
+  // Saved Integrations from Supabase
+  List<UserSavedIntegrationModel> _savedIntegrations = [];
+  bool _isLoadingIntegrations = false;
+  String? _selectedIntegrationId;
 
   // New Rule Input state
   bool _newRuleExpanded = true;
@@ -97,6 +104,200 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     }
     _loadRecentReports();
     _initBank();
+    _loadSavedIntegrations();
+  }
+
+  Future<void> _loadSavedIntegrations() async {
+    setState(() => _isLoadingIntegrations = true);
+    try {
+      final email = widget.email.isNotEmpty
+          ? widget.email
+          : 'arjundamodaranofficial@gmail.com';
+      final items = await SupabaseService().getUserSavedIntegrations(email);
+      if (mounted) {
+        setState(() {
+          _savedIntegrations = items;
+          if (items.isNotEmpty) {
+            UserSavedIntegrationModel? active;
+            for (final it in items) {
+              if (it.isSelected) {
+                active = it;
+                break;
+              }
+            }
+            active ??= items.first;
+            _selectedIntegrationId = active.id;
+            _verifiedSources.clear();
+            _verifiedSources.add(active.toIntegrationSourceModel());
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading user saved integrations: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingIntegrations = false);
+      }
+    }
+  }
+
+  Future<void> _selectIntegration(UserSavedIntegrationModel item) async {
+    setState(() {
+      _selectedIntegrationId = item.id;
+      _verifiedSources.clear();
+      _verifiedSources.add(item.toIntegrationSourceModel());
+    });
+    final email = widget.email.isNotEmpty
+        ? widget.email
+        : 'arjundamodaranofficial@gmail.com';
+    await SupabaseService().setUserIntegrationSelected(email, item.id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✓ Active Source: "${item.integrationName}" (${item.sourceType})',
+            style: const TextStyle(fontFamily: 'packages/cidan/Poppins'),
+          ),
+          backgroundColor: const Color(0xFF6366F1),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _removeIntegration(UserSavedIntegrationModel item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 20, 18),
+        title: const Text(
+          'Remove Saved Integration',
+          style: TextStyle(
+            fontFamily: 'packages/cidan/Poppins',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${item.integrationName}" (${item.sourceType}) from Supabase cloud?',
+          style: const TextStyle(
+            fontFamily: 'packages/cidan/Poppins',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'packages/cidan/Poppins',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(
+                fontFamily: 'packages/cidan/Poppins',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await SupabaseService().deleteUserSavedIntegration(item.id);
+      setState(() {
+        _savedIntegrations.removeWhere((it) => it.id == item.id);
+        if (_selectedIntegrationId == item.id) {
+          if (_savedIntegrations.isNotEmpty) {
+            _selectIntegration(_savedIntegrations.first);
+          } else {
+            _selectedIntegrationId = null;
+            _verifiedSources.clear();
+          }
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ Removed "${item.integrationName}"'),
+            backgroundColor: const Color(0xFF6366F1),
+          ),
+        );
+      }
+    }
+  }
+
+  void _editIntegration(UserSavedIntegrationModel item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => ConnectCidanDialog(
+        userEmail: widget.email,
+        initialIntegration: item,
+        onSavedIntegration: (saved) {
+          setState(() {
+            final idx =
+                _savedIntegrations.indexWhere((it) => it.id == saved.id);
+            if (idx >= 0) {
+              _savedIntegrations[idx] = saved;
+            } else {
+              _savedIntegrations.insert(0, saved);
+            }
+            _selectIntegration(saved);
+          });
+        },
+        onSourceVerified: (integration, source) {
+          _loadSavedIntegrations();
+        },
+      ),
+    );
+  }
+
+  void _openNewIntegrationDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => ConnectCidanDialog(
+        userEmail: widget.email,
+        onSavedIntegration: (saved) {
+          setState(() {
+            _savedIntegrations.removeWhere((it) => it.id == saved.id);
+            _savedIntegrations.insert(0, saved);
+            _selectIntegration(saved);
+          });
+        },
+        onSourceVerified: (integration, source) {
+          _loadSavedIntegrations();
+        },
+      ),
+    );
   }
 
   Future<void> _initBank() async {
@@ -189,15 +390,16 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     try {
       return await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: allowedExtensions ?? [
-          'pdf',
-          'png',
-          'jpg',
-          'jpeg',
-          'docx',
-          'doc',
-          'txt',
-        ],
+        allowedExtensions: allowedExtensions ??
+            [
+              'pdf',
+              'png',
+              'jpg',
+              'jpeg',
+              'docx',
+              'doc',
+              'txt',
+            ],
       );
     } catch (_) {
       return null;
@@ -429,8 +631,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
               circularNumber:
                   'RBI/2026-27/CIRCULAR-${DateTime.now().millisecondsSinceEpoch % 1000}',
               effectiveDate: DateTime.now(),
-              complianceDeadline:
-                  DateTime.now().add(const Duration(days: 90)),
+              complianceDeadline: DateTime.now().add(const Duration(days: 90)),
               category: 'KYC & Anti-Money Laundering',
               fileFormat: fmt,
               fileSizeBytes: 2100000,
@@ -1848,7 +2049,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'Connect to Oracle, Mongo, Postgres, or APIs via CIDAN proxy',
+                                      'Connect to PostgreSQL, MySQL, MongoDB, or APIs via CIDAN gateway',
                                       style: TextStyle(
                                         fontFamily: 'packages/cidan/Poppins',
                                         fontSize: 11,
@@ -1862,24 +2063,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                           ),
                           const SizedBox(height: 14),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => ConnectCidanDialog(
-                                  userEmail: widget.email,
-                                  onSourceVerified: (integration, source) {
-                                    setState(() {
-                                      _verifiedSources.removeWhere(
-                                        (s) =>
-                                            s.id == source.id ||
-                                            s.sourceType == source.sourceType,
-                                      );
-                                      _verifiedSources.add(source);
-                                    });
-                                  },
-                                ),
-                              );
-                            },
+                            onPressed: _openNewIntegrationDialog,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6366F1),
                               foregroundColor: Colors.white,
@@ -1906,97 +2090,135 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       ),
                     ),
 
-                    if (_verifiedSources.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Verified Active Sources (${_verifiedSources.length})',
-                            style: const TextStyle(
-                              fontFamily: 'packages/cidan/Poppins',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
-                            ),
+                    if (_isLoadingIntegrations) ...[
+                      const SizedBox(height: 12),
+                      const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF6366F1),
                           ),
-                          InkWell(
-                            onTap: () => setState(() => _verifiedSources.clear()),
-                            child: const Text(
-                              'Clear sources',
-                              style: TextStyle(
+                        ),
+                      ),
+                    ],
+
+                    if (_savedIntegrations.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.cloud_done_rounded,
+                            size: 16,
+                            color: Color(0xFF7C3AED),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Saved Cloud Integrations (${_savedIntegrations.length})',
+                              style: const TextStyle(
                                 fontFamily: 'packages/cidan/Poppins',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFEF4444),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      ..._verifiedSources.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final src = entry.value;
-                        final isDb = src.sourceType != 'REST_API' &&
-                            src.sourceType != 'GRAPHQL';
-                        final detail = isDb
-                            ? '${src.configMetadata["host"] ?? "db"}:${src.configMetadata["port"] ?? ""}'
-                            : (src.configMetadata["base_url"] ?? "API Endpoint");
+                      ..._savedIntegrations.map((item) {
+                        final isSelected = (_selectedIntegrationId == item.id);
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                            horizontal: 10,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: isSelected
+                                ? const Color(
+                                    0xFFF5F3FF) // Soft Violet Background
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(
+                                      0xFF7C3AED) // Violet Box Outline
+                                  : const Color(0xFFE2E8F0),
+                              width: isSelected ? 1.8 : 1.0,
+                            ),
                           ),
                           child: Row(
                             children: [
+                              // Radio / Choose Button (Violet point)
+                              InkWell(
+                                onTap: () => _selectIntegration(item),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked_rounded
+                                        : Icons.radio_button_off_rounded,
+                                    size: 20,
+                                    color: isSelected
+                                        ? const Color(
+                                            0xFF7C3AED) // Violet Point Colour
+                                        : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
                               Icon(
-                                isDb
+                                item.isDatabase
                                     ? Icons.storage_rounded
                                     : Icons.http_rounded,
                                 size: 18,
-                                color: const Color(0xFF15803D),
+                                color: isSelected
+                                    ? const Color(0xFF7C3AED)
+                                    : const Color(0xFF64748B),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
+                                    Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 6,
+                                      runSpacing: 2,
                                       children: [
                                         Text(
-                                          src.sourceType,
+                                          item.sourceType,
                                           style: const TextStyle(
-                                            fontFamily: 'packages/cidan/Poppins',
+                                            fontFamily:
+                                                'packages/cidan/Poppins',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                             color: Color(0xFF0F172A),
                                           ),
                                         ),
-                                        const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 1.5,
+                                            horizontal: 5,
+                                            vertical: 1,
                                           ),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFDCFCE7),
                                             borderRadius:
-                                                BorderRadius.circular(6),
+                                                BorderRadius.circular(5),
                                           ),
                                           child: const Text(
                                             '✓ Verified',
                                             style: TextStyle(
                                               fontFamily:
                                                   'packages/cidan/Poppins',
-                                              fontSize: 9.5,
+                                              fontSize: 9,
                                               fontWeight: FontWeight.w700,
                                               color: Color(0xFF15803D),
                                             ),
@@ -2004,11 +2226,23 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 2),
                                     Text(
-                                      detail,
+                                      item.integrationName,
                                       style: const TextStyle(
                                         fontFamily: 'packages/cidan/Poppins',
                                         fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF334155),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      item.displaySubtitle,
+                                      style: const TextStyle(
+                                        fontFamily: 'packages/cidan/Poppins',
+                                        fontSize: 10.5,
                                         color: Color(0xFF64748B),
                                       ),
                                       maxLines: 1,
@@ -2017,17 +2251,40 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  size: 16,
-                                  color: Color(0xFF64748B),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _verifiedSources.removeAt(idx);
-                                  });
-                                },
+                              // Edit & Remove Action Buttons (Zero-overflow compact constraints)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 16.5,
+                                      color: Color(0xFF4F46E5),
+                                    ),
+                                    tooltip: 'Edit Configuration',
+                                    onPressed: () => _editIntegration(item),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  IconButton(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 16.5,
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                    tooltip: 'Remove from Supabase',
+                                    onPressed: () => _removeIntegration(item),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -2183,7 +2440,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                             child: const Center(
                               child: Icon(
                                 Icons.cloud_upload_outlined,
-                                color: Color(0xFF7C3AED),
+                                color: Color(0xFF6366F1),
                                 size: 22,
                               ),
                             ),
@@ -2231,9 +2488,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               onPressed: () =>
                                   _handleChooseNewRuleFile(multiple: true),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF7C3AED),
+                                foregroundColor: const Color(0xFF6366F1),
                                 side: const BorderSide(
-                                  color: Color(0xFF7C3AED),
+                                  color: Color(0xFF6366F1),
                                   width: 1.2,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -2248,7 +2505,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                               icon: const Icon(
                                 Icons.folder_open_rounded,
                                 size: 17,
-                                color: Color(0xFF7C3AED),
+                                color: Color(0xFF6366F1),
                               ),
                               label: const Text(
                                 'Choose File',
@@ -2461,7 +2718,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                                       fileSizeBytes: 2100000,
                                       initialModel: _circularMetadata,
                                       onSave: (saved) {
-                                        setState(() => _circularMetadata = saved);
+                                        setState(
+                                            () => _circularMetadata = saved);
                                         SupabaseService()
                                             .saveRegulatoryDocument(saved);
                                       },
@@ -2546,7 +2804,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                     colors: [
                       Color(0xFF4F46E5),
                       Color(0xFF6366F1),
-                      Color(0xFF7C3AED)
+                      Color(0xFF6366F1)
                     ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
@@ -2622,7 +2880,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                       height: 38,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+                          colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),

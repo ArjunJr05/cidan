@@ -71,4 +71,5 @@ class SupabaseConfig {
   static const String tableRuleDeltas = 'rule_deltas';
   static const String tableRuleMappings = 'rule_mappings';
   static const String tableRuleValidations = 'rule_validations';
+  static const String tableUserSavedIntegrations = 'user_saved_integrations';
 }

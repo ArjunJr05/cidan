@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/compliance/models/bank_integration_model.dart';
+import '../../features/compliance/models/user_saved_integration_model.dart';
 import '../../features/compliance/models/existing_rule_model.dart';
 import '../../features/compliance/models/regulatory_document_model.dart';
 import '../../features/compliance/models/rule_ir_model.dart';
@@ -41,6 +42,7 @@ class SupabaseService {
   final List<Map<String, dynamic>> _localConnectionVerificationsStore = [];
   final List<Map<String, dynamic>> _localExistingRulesStore = [];
   final List<Map<String, dynamic>> _localRegulatoryDocumentsStore = [];
+  final List<Map<String, dynamic>> _localUserSavedIntegrationsStore = [];
 
   /// In-memory cache for Milestone 2 Rule IR, Delta Analysis, Mappings & Validations
   final List<Map<String, dynamic>> _localRuleIRStore = [];
@@ -755,6 +757,114 @@ class SupabaseService {
         .where((e) => e['source_id'] == sourceId)
         .map((e) => ConnectionVerificationResult.fromJson(e))
         .toList();
+  }
+
+  /// Save or update a user's verified integration and credentials
+  Future<void> saveUserSavedIntegration(UserSavedIntegrationModel integration) async {
+    final json = integration.toJson();
+    final idx = _localUserSavedIntegrationsStore.indexWhere((e) => e['id'] == integration.id);
+    if (idx >= 0) {
+      _localUserSavedIntegrationsStore[idx] = json;
+    } else {
+      _localUserSavedIntegrationsStore.insert(0, json);
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!.from(SupabaseConfig.tableUserSavedIntegrations).upsert(json);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error saving user integration: $e');
+      }
+    }
+  }
+
+  /// Retrieve all saved integrations for a given user email
+  Future<List<UserSavedIntegrationModel>> getUserSavedIntegrations(String userEmail) async {
+    final cleanEmail = userEmail.trim().toLowerCase();
+
+    if (isConnected && _client != null) {
+      try {
+        final List<dynamic> response = await _client!
+            .from(SupabaseConfig.tableUserSavedIntegrations)
+            .select()
+            .ilike('user_email', cleanEmail.isNotEmpty ? cleanEmail : '%')
+            .order('created_at', ascending: false);
+
+        if (response.isNotEmpty) {
+          final items = response
+              .map((e) => UserSavedIntegrationModel.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+
+          // Sync into local cache
+          for (final item in items) {
+            final idx = _localUserSavedIntegrationsStore.indexWhere((e) => e['id'] == item.id);
+            if (idx >= 0) {
+              _localUserSavedIntegrationsStore[idx] = item.toJson();
+            } else {
+              _localUserSavedIntegrationsStore.add(item.toJson());
+            }
+          }
+          return items;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error fetching user saved integrations: $e');
+      }
+    }
+
+    return _localUserSavedIntegrationsStore
+        .where((e) {
+          if (cleanEmail.isEmpty) return true;
+          return (e['user_email']?.toString().toLowerCase() ?? '') == cleanEmail;
+        })
+        .map((e) => UserSavedIntegrationModel.fromJson(e))
+        .toList();
+  }
+
+  /// Select an active integration among multiple connections for processing
+  Future<void> setUserIntegrationSelected(String userEmail, String selectedId) async {
+    final cleanEmail = userEmail.trim().toLowerCase();
+
+    // Update local cache
+    for (int i = 0; i < _localUserSavedIntegrationsStore.length; i++) {
+      final entry = _localUserSavedIntegrationsStore[i];
+      if (cleanEmail.isEmpty || (entry['user_email']?.toString().toLowerCase() == cleanEmail)) {
+        entry['is_selected'] = (entry['id'] == selectedId);
+      }
+    }
+
+    if (isConnected && _client != null) {
+      try {
+        // Deselect all for this email
+        await _client!
+            .from(SupabaseConfig.tableUserSavedIntegrations)
+            .update({'is_selected': false})
+            .ilike('user_email', cleanEmail.isNotEmpty ? cleanEmail : '%');
+
+        // Select the chosen one
+        await _client!
+            .from(SupabaseConfig.tableUserSavedIntegrations)
+            .update({'is_selected': true})
+            .eq('id', selectedId);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error updating selected integration: $e');
+      }
+    }
+  }
+
+  /// Delete a saved integration by ID
+  Future<void> deleteUserSavedIntegration(String id) async {
+    _localUserSavedIntegrationsStore.removeWhere((e) => e['id'] == id);
+
+    if (isConnected && _client != null) {
+      try {
+        await _client!
+            .from(SupabaseConfig.tableUserSavedIntegrations)
+            .delete()
+            .eq('id', id);
+      } catch (e) {
+        debugPrint('⚠️ [CIDAN Supabase] Error deleting user saved integration: $e');
+      }
+    }
   }
 
   // =========================================================================

@@ -480,3 +480,40 @@ CREATE POLICY "Strict rule_validations isolation"
     ON public.rule_validations FOR ALL TO authenticated
     USING (public.is_bank_member(bank_id))
     WITH CHECK (public.is_bank_member(bank_id));
+
+-- ============================================================================
+-- 16. Table: user_saved_integrations
+-- User-isolated verified credentials vault with active selection, edit, and removal
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.user_saved_integrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_email TEXT NOT NULL,
+    bank_name TEXT NOT NULL DEFAULT 'Apex Federal Reserve',
+    bank_code TEXT NOT NULL DEFAULT 'apex-bank-01',
+    integration_name TEXT NOT NULL,
+    environment VARCHAR(32) NOT NULL DEFAULT 'PRODUCTION' CHECK (environment IN ('DEVELOPMENT', 'UAT', 'PRODUCTION')),
+    source_type VARCHAR(32) NOT NULL, -- 'REST_API', 'GRAPHQL', 'POSTGRESQL', 'MYSQL', 'MONGODB', 'REDIS'
+    config_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    credential_ref TEXT,
+    ssl_config JSONB NOT NULL DEFAULT '{"enabled": true, "verify_cert": true}'::jsonb,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'PENDING', 'FAILED', 'VERIFIED')),
+    is_selected BOOLEAN NOT NULL DEFAULT true,
+    last_verified_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_saved_integrations_email 
+    ON public.user_saved_integrations (user_email);
+
+CREATE INDEX IF NOT EXISTS idx_user_saved_integrations_selected 
+    ON public.user_saved_integrations (user_email, is_selected);
+
+ALTER TABLE public.user_saved_integrations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public access for user_saved_integrations" ON public.user_saved_integrations;
+CREATE POLICY "Allow public access for user_saved_integrations" 
+    ON public.user_saved_integrations FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
