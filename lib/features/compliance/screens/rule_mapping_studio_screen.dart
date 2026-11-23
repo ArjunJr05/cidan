@@ -99,17 +99,156 @@ class _RuleMappingStudioScreenState extends State<RuleMappingStudioScreen>
         bankId: widget.bankId ?? 'apex-bank-01',
       );
 
+      // If empty, check for user-uploaded baseline rules in Supabase
+      if (_existingRules.isEmpty) {
+        final rawUploaded = await _supabaseService.getExistingRules(
+          bankId: widget.bankId,
+        );
+        if (rawUploaded.isNotEmpty) {
+          _existingRules = rawUploaded.map((r) {
+            return RuleIR(
+              id: r.id,
+              bankId: r.bankId,
+              ruleId: r.ruleCode.isNotEmpty ? r.ruleCode : 'RULE-${r.id.substring(0, 6)}',
+              ruleName: r.ruleTitle,
+              description: r.ruleContent,
+              category: 'GENERAL',
+              sourceType: r.sourceType,
+              sourceId: r.sourceId,
+              version: r.version,
+              isActive: true,
+              conditionTree: const ConditionTree(
+                conditions: [
+                  ConditionNode(
+                    field: 'policy_compliance_status',
+                    operator: '==',
+                    value: 'ACTIVE',
+                  ),
+                ],
+              ),
+              actions: [
+                ActionNode(
+                  actionType: 'ENFORCE_POLICY',
+                  target: 'CORE_ENGINE',
+                  parameters: {'rule_ref': r.ruleCode},
+                ),
+              ],
+            );
+          }).toList();
+        }
+      }
+
+      // If still empty, load standardized baseline bank policy catalog
+      if (_existingRules.isEmpty) {
+        _existingRules = _getBaselineBankRules();
+      }
+
       if (_allDeltas.isNotEmpty) {
         _selectedDelta = _allDeltas.first;
         await _runValidationForSelectedDelta();
       }
     } catch (e) {
       debugPrint('⚠️ Error loading Rule Mapping Studio: $e');
+      if (_existingRules.isEmpty) {
+        _existingRules = _getBaselineBankRules();
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  List<RuleIR> _getBaselineBankRules() {
+    return [
+      const RuleIR(
+        ruleId: 'RULE-AML-001',
+        ruleName: 'High Value Cash Transaction Threshold',
+        description: 'Mandatory reporting to regulatory authority for cash transactions exceeding baseline threshold.',
+        category: 'GENERAL',
+        sourceType: 'CORE_BANKING',
+        version: 1,
+        isActive: true,
+        conditionTree: ConditionTree(
+          conditions: [
+            ConditionNode(
+              field: 'transaction_amount',
+              operator: '>=',
+              value: 1000000,
+              unit: 'INR',
+            ),
+          ],
+        ),
+        actions: [
+          ActionNode(actionType: 'REPORT_SUSPICIOUS_TRANSACTION', target: 'FIU_PORTAL', parameters: {'deadline_days': 15}),
+        ],
+      ),
+      const RuleIR(
+        ruleId: 'RULE-KYC-002',
+        ruleName: 'Periodic Customer Due Diligence (Re-KYC)',
+        description: 'Periodic re-verification of customer identity credentials based on baseline customer risk rating.',
+        category: 'KYC',
+        sourceType: 'POLICY_HANDBOOK',
+        version: 1,
+        isActive: true,
+        conditionTree: ConditionTree(
+          conditions: [
+            ConditionNode(
+              field: 'customer_risk_rating',
+              operator: '==',
+              value: 'LOW',
+            ),
+          ],
+        ),
+        actions: [
+          ActionNode(actionType: 'TRIGGER_RE_KYC', target: 'CUSTOMER_PORTAL', parameters: {'cycle_years': 8}),
+        ],
+      ),
+      const RuleIR(
+        ruleId: 'RULE-LEND-003',
+        ruleName: 'Retail Loan to Value (LTV) Cap',
+        description: 'Maximum permissible loan to property value ratio for retail residential mortgage sanctions.',
+        category: 'LENDING',
+        sourceType: 'CREDIT_POLICY',
+        version: 1,
+        isActive: true,
+        conditionTree: ConditionTree(
+          conditions: [
+            ConditionNode(
+              field: 'loan_to_value_ratio',
+              operator: '<=',
+              value: 80,
+              unit: '%',
+            ),
+          ],
+        ),
+        actions: [
+          ActionNode(actionType: 'RESTRICT_DISBURSEMENT', target: 'LOAN_LOS', parameters: {'exceed_action': 'REJECT'}),
+        ],
+      ),
+      const RuleIR(
+        ruleId: 'RULE-WIRE-004',
+        ruleName: 'Cross Border Outward Remittance Verification',
+        description: 'Multi-officer verification requirement for high value outbound foreign currency telegraphic transfers.',
+        category: 'FOREIGN_EXCHANGE',
+        sourceType: 'TREASURY_SYSTEM',
+        version: 1,
+        isActive: true,
+        conditionTree: ConditionTree(
+          conditions: [
+            ConditionNode(
+              field: 'remittance_amount_usd',
+              operator: '>=',
+              value: 50000,
+              unit: 'USD',
+            ),
+          ],
+        ),
+        actions: [
+          ActionNode(actionType: 'REQUIRE_DUAL_AUTH', target: 'SWIFT_GATEWAY', parameters: {'approvers_required': 2}),
+        ],
+      ),
+    ];
   }
 
   Future<void> _runValidationForSelectedDelta() async {
