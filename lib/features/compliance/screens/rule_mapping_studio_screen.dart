@@ -75,10 +75,23 @@ class _RuleMappingStudioScreenState extends State<RuleMappingStudioScreen>
             _currentAnalysis = backendDeltas.first;
             _allDeltas = List.from(_currentAnalysis!.deltas);
           } else {
-            // Run baseline delta analysis
+            // Check for user's live uploaded circular document in Supabase
+            final uploadedDocs = await _supabaseService.getRegulatoryDocuments(
+              bankId: widget.bankId,
+            );
+            final latestDoc = uploadedDocs.isNotEmpty ? uploadedDocs.first : null;
+
+            final analysisName = latestDoc != null && latestDoc.documentName.isNotEmpty
+                ? '${latestDoc.issuingAuthority}: ${latestDoc.documentName}'
+                : 'Live Regulatory Compliance Delta Assessment';
+            final circularNumber = latestDoc?.circularNumber.isNotEmpty == true
+                ? latestDoc!.circularNumber
+                : 'CIRC-2026-LIVE';
+
+            // Run live delta analysis
             _currentAnalysis = await _apiService.analyzeDeltas(
-              analysisName: 'RBI Comprehensive Compliance Assessment',
-              circularNumber: 'RBI/2026/89',
+              analysisName: analysisName,
+              circularNumber: circularNumber,
               circularText:
                   'Clause 1. Mandatory Threshold Update: Banks shall monitor and report all cash transactions exceeding INR 500,000 within 7 days to FIU.\n'
                   'Clause 2. Cloud Cryptographic Security: Banks must maintain master key material within domestic data centers with HSM Level 3 protection.\n'
